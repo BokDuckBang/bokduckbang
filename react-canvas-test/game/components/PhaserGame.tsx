@@ -29,24 +29,20 @@ export const PhaserGame = () => {
 
     let cats: Phaser.GameObjects.Sprite[] = [];
     let backgrounds: Phaser.GameObjects.Image[] = [];
+    let trackBgs: Phaser.GameObjects.Image[] = [];
     let tracks: Phaser.GameObjects.Image[] = [];
     let gameWidth: number;
     let gameHeight: number;
 
     function preload(this: Phaser.Scene) {
-      this.load.spritesheet('cat1', '/cat1-sprite.png', { 
-        frameWidth: 32,
-        frameHeight: 32
-      });
-      this.load.spritesheet('cat2', '/cat2-sprite.png', { 
-        frameWidth: 32,
-        frameHeight: 32
-      });
-      this.load.spritesheet('cat3', '/cat3-sprite.png', { 
-        frameWidth: 32,
-        frameHeight: 32
-      });
+      for (let i = 1; i <= 7; i++) {
+        this.load.spritesheet(`cat${i}`, `/cat${i}-sprite.png`, { 
+          frameWidth: 32,
+          frameHeight: 32
+        });
+      }
       this.load.image('background', '/bg.png');
+      this.load.image('track-bg', '/track-bg.png');
       this.load.image('track', '/track.png');
     }
 
@@ -54,8 +50,10 @@ export const PhaserGame = () => {
       gameWidth = this.scale.width;
       gameHeight = this.scale.height;
       const backgroundHeight = gameHeight * 0.3;
-      const trackHeight = gameHeight * 0.7;
+      const trackBgHeight = gameHeight * 0.1;
+      const trackHeight = gameHeight * 0.6;
 
+      // 배경 이미지 생성
       for (let i = 0; i < 2; i++) {
         const bg = this.add.image(i * gameWidth, 0, 'background');
         bg.setOrigin(0, 0);
@@ -63,51 +61,53 @@ export const PhaserGame = () => {
         backgrounds.push(bg);
       }
 
+      // track-bg 이미지 생성
       for (let i = 0; i < 2; i++) {
-        const track = this.add.image(i * gameWidth, backgroundHeight, 'track');
+        const trackBg = this.add.image(i * gameWidth, backgroundHeight, 'track-bg');
+        trackBg.setOrigin(0, 0);
+        trackBg.setDisplaySize(gameWidth + 4, trackBgHeight);
+        trackBgs.push(trackBg);
+      }
+
+      // 트랙 이미지 생성
+      for (let i = 0; i < 2; i++) {
+        const track = this.add.image(i * gameWidth, backgroundHeight + trackBgHeight, 'track');
         track.setOrigin(0, 0);
         track.setDisplaySize(gameWidth + 4, trackHeight);
         tracks.push(track);
       }
 
-      this.anims.create({
-        key: 'walk1',
-        frames: this.anims.generateFrameNumbers('cat1', { 
-          start: 0,
-          end: 3
-        }),
-        frameRate: 8,
-        repeat: -1
-      });
+      // 7개의 고양이 애니메이션 생성
+      for (let i = 1; i <= 7; i++) {
+        this.anims.create({
+          key: `walk${i}`,
+          frames: this.anims.generateFrameNumbers(`cat${i}`, { 
+            start: 0,
+            end: 3
+          }),
+          frameRate: 8,
+          repeat: -1
+        });
+      }
 
-      this.anims.create({
-        key: 'walk2',
-        frames: this.anims.generateFrameNumbers('cat2', { 
-          start: 0,
-          end: 3
-        }),
-        frameRate: 8,
-        repeat: -1
-      });
+      const remainingHeight = gameHeight - backgroundHeight - trackBgHeight;
+      const trackArea = gameHeight * 0.6; // 트랙 영역 (전체 높이의 60%)
+      const catSpacing = trackArea / 10; // 각 고양이당 공간 (트랙 영역의 1/10)
+      const startY = backgroundHeight + trackBgHeight; // 고양이 시작 Y 위치
 
-      this.anims.create({
-        key: 'walk3',
-        frames: this.anims.generateFrameNumbers('cat3', { 
-          start: 0,
-          end: 3
-        }),
-        frameRate: 8,
-        repeat: -1
-      });
-
-      const remainingHeight = gameHeight - backgroundHeight;
-      const catSpacing = remainingHeight / 6;
-      
-      for (let i = 0; i < 5; i++) {
-        const spriteKey = i === 1 ? 'cat2' : 'cat1';
-        const animKey = i === 1 ? 'walk2' : 'walk1';
+      // 10마리의 고양이 생성
+      for (let i = 0; i < 10; i++) {
+        let spriteKey = 'cat1';
+        let animKey = 'walk1';
         
-        const cat = this.add.sprite(0, backgroundHeight + catSpacing + (i * catSpacing), spriteKey);
+        if (i < 7) {
+          // 1~7번 고양이는 각각의 스프라이트 사용
+          spriteKey = `cat${i + 1}`;
+          animKey = `walk${i + 1}`;
+        }
+        // 8~10번 고양이는 cat1 사용 (기본값 유지)
+        
+        const cat = this.add.sprite(0, startY + (catSpacing * i) + (catSpacing / 2), spriteKey);
         cat.setScale(1.3);
         cat.play(animKey);
         cats.push(cat);
@@ -117,23 +117,32 @@ export const PhaserGame = () => {
         gameWidth = gameSize.width;
         gameHeight = gameSize.height;
         const newBackgroundHeight = gameHeight * 0.3;
-        const newTrackHeight = gameHeight * 0.7;
+        const newTrackBgHeight = gameHeight * 0.1;
+        const newTrackHeight = gameHeight * 0.6;
         
         backgrounds.forEach((bg, index) => {
           bg.setDisplaySize(gameWidth + 1, newBackgroundHeight);
           bg.x = index * gameWidth;
         });
 
+        trackBgs.forEach((trackBg, index) => {
+          trackBg.setDisplaySize(gameWidth + 4, newTrackBgHeight);
+          trackBg.x = index * gameWidth;
+          trackBg.y = newBackgroundHeight;
+        });
+
         tracks.forEach((track, index) => {
           track.setDisplaySize(gameWidth + 4, newTrackHeight);
           track.x = index * gameWidth;
-          track.y = newBackgroundHeight;
+          track.y = newBackgroundHeight + newTrackBgHeight;
         });
 
-        const newRemainingHeight = gameHeight - newBackgroundHeight;
-        const newCatSpacing = newRemainingHeight / 6;
+        const newTrackArea = gameHeight * 0.6;
+        const newCatSpacing = newTrackArea / 10;
+        const newStartY = newBackgroundHeight + newTrackBgHeight;
+
         cats.forEach((cat, index) => {
-          cat.y = newBackgroundHeight + newCatSpacing + (index * newCatSpacing);
+          cat.y = newStartY + (newCatSpacing * index) + (newCatSpacing / 2);
         });
       });
     }
@@ -146,6 +155,17 @@ export const PhaserGame = () => {
           const otherBg = backgrounds.find(b => b !== bg);
           if (otherBg) {
             bg.x = otherBg.x + gameWidth - 1;
+          }
+        }
+      });
+
+      trackBgs.forEach(trackBg => {
+        trackBg.x -= 2;
+
+        if (trackBg.x <= -gameWidth) {
+          const otherTrackBg = trackBgs.find(t => t !== trackBg);
+          if (otherTrackBg) {
+            trackBg.x = otherTrackBg.x + gameWidth - 4;
           }
         }
       });
