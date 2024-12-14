@@ -1,21 +1,28 @@
 export type Page =
   | "home"
+  | "waiting"
   | "pokemon";
 
-export type WebviewToBlockMessage = { type: "INIT" } | {
-  type: "GET_POKEMON_REQUEST";
-  payload: { name: string };
-};
+export type WebviewToBlockMessage = 
+ | { type: "INIT" }
+ | { type: "REQUEST_WAITING_DATA" }
+;
 
-export type BlocksToWebviewMessage = {
-  type: "INIT_RESPONSE";
-  payload: {
-    postId: string;
-  };
-} | {
-  type: "GET_POKEMON_RESPONSE";
-  payload: { number: number; name: string; error?: string };
-};
+export type BlocksToWebviewMessage = 
+  | {
+    type: "INIT_RESPONSE";
+    payload: {
+      postId: string;
+      page: Page;
+    };
+  }
+  | {
+    type: "RESPONSE_WAITING_DATA";
+    payload: {
+      deadline: number;
+    }
+  }
+  ; 
 
 export type DevvitMessage = {
   type: "devvit-message";
