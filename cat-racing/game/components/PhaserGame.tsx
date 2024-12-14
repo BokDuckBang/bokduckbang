@@ -102,7 +102,7 @@ export const PhaserGame = () => {
         'start'
       );
       startImage.setOrigin(0, 0);
-      startImage.setDisplaySize(startImage.width, trackHeight + 2);
+      startImage.setDisplaySize(startImage.width, trackHeight);
 
       // 10개의 고양이 애니메이션 생성
       for (let i = 1; i <= 10; i++) {
@@ -183,73 +183,89 @@ export const PhaserGame = () => {
     }
 
     function update(this: Phaser.Scene) {
-      const currentTime = this.time.now;
-      const gameStarted = currentTime >= cats[0].getData('raceStartTime');
-
-      // 게임 시작 전에는 배경만 움직임
-      backgrounds.forEach(bg => {
-        bg.x -= 1;
-        if (bg.x <= -gameWidth) {
-          const otherBg = backgrounds.find(b => b !== bg);
-          if (otherBg) {
-            bg.x = otherBg.x + gameWidth - 1;
-          }
+        const currentTime = this.time.now;
+        const gameStarted = currentTime >= cats[0].getData('raceStartTime');
+      
+        // 1등 고양이의 진행 상태 확인
+        const firstCat = cats[0];
+        const firstCatStartTime = firstCat.getData('raceStartTime');
+        const firstCatElapsedSeconds = (currentTime - firstCatStartTime) / 1000;
+        
+        // 감속 시작 시점 (1등 도착 2초 전 = 8초)과 정지 시점 (10초) 설정
+        const slowdownStart = 8;
+        const stopTime = 10;
+        
+        // 감속 계수 계산 (1 -> 0)
+        let speedFactor = 1;
+        if (gameStarted && firstCatElapsedSeconds > slowdownStart) {
+          speedFactor = Math.max(0, 1 - (firstCatElapsedSeconds - slowdownStart) / (stopTime - slowdownStart));
         }
-      });
-
-      // 게임 시작 후에만 트랙과 고양이 움직임
-      if (gameStarted) {
-        trackBgs.forEach(trackBg => {
-          trackBg.x -= 2;
-          if (trackBg.x <= -gameWidth) {
-            const otherTrackBg = trackBgs.find(t => t !== trackBg);
-            if (otherTrackBg) {
-              trackBg.x = otherTrackBg.x + gameWidth - 4;
-            }
-          }
-        });
-
-        tracks.forEach(track => {
-          track.x -= 2;
-          if (track.x <= -gameWidth) {
-            const otherTrack = tracks.find(t => t !== track);
-            if (otherTrack) {
-              track.x = otherTrack.x + gameWidth - 4;
-            }
-          }
-        });
-
-        // start 이미지 업데이트
-        if (startImage) {
-          startImage.x -= 0.4;
-        }
-
-        cats.forEach((cat, index) => {
-          if (!cat.getData('finished')) {
-            const startTime = cat.getData('raceStartTime');
-            const elapsedSeconds = (currentTime - startTime) / 1000;
-            
-            if (elapsedSeconds <= 10) {
-              const second = Math.floor(elapsedSeconds);
-              const fraction = elapsedSeconds - second;
-              
-              if (second < 10) {
-                let totalDistance = 0;
-                for (let i = 0; i < second; i++) {
-                  totalDistance += normalizedDistances[index][i];
-                }
-                totalDistance += normalizedDistances[index][second] * fraction;
-                
-                cat.x = totalDistance * gameWidth;
+      
+        // 게임 시작 후에만 모든 배경 요소들이 움직임
+        if (gameStarted) {
+          // 배경 이미지 업데이트
+          backgrounds.forEach(bg => {
+            bg.x -= 1 * speedFactor;
+            if (bg.x <= -gameWidth) {
+              const otherBg = backgrounds.find(b => b !== bg);
+              if (otherBg) {
+                bg.x = otherBg.x + gameWidth - 1;
               }
-            } else if (elapsedSeconds <= 11) {
-              const exitProgress = elapsedSeconds - 10;
-              cat.x += (gameWidth * 0.5) * exitProgress;
             }
+          });
+      
+          // track-bg 이미지 업데이트
+          trackBgs.forEach(trackBg => {
+            trackBg.x -= 2 * speedFactor;
+            if (trackBg.x <= -gameWidth) {
+              const otherTrackBg = trackBgs.find(t => t !== trackBg);
+              if (otherTrackBg) {
+                trackBg.x = otherTrackBg.x + gameWidth - 4;
+              }
+            }
+          });
+      
+          tracks.forEach(track => {
+            track.x -= 2;
+            if (track.x <= -gameWidth) {
+              const otherTrack = tracks.find(t => t !== track);
+              if (otherTrack) {
+                track.x = otherTrack.x + gameWidth - 4;
+              }
+            }
+          });
+      
+          // start 이미지 업데이트
+          if (startImage) {
+            startImage.x -= 0.4;
           }
-        });
+      
+          cats.forEach((cat, index) => {
+            if (!cat.getData('finished')) {
+              const startTime = cat.getData('raceStartTime');
+              const elapsedSeconds = (currentTime - startTime) / 1000;
+              
+              if (elapsedSeconds <= 10) {
+                const second = Math.floor(elapsedSeconds);
+                const fraction = elapsedSeconds - second;
+                
+                if (second < 10) {
+                  let totalDistance = 0;
+                  for (let i = 0; i < second; i++) {
+                    totalDistance += normalizedDistances[index][i];
+                  }
+                  totalDistance += normalizedDistances[index][second] * fraction;
+                  
+                  cat.x = totalDistance * gameWidth;
+                }
+              } else if (elapsedSeconds <= 11) {
+                const exitProgress = elapsedSeconds - 10;
+                cat.x += (gameWidth * 0.5) * exitProgress;
+              }
+            }
+          });
+        }
       }
-    }
 
     return () => {
       game.destroy(true);
