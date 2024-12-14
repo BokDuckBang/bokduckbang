@@ -135,15 +135,10 @@ export const PhaserGame = () => {
 
       const trackArea = gameHeight * 0.6;  // 트랙의 전체 높이 (화면의 60%)
       const catHeight = trackArea / 10;    // 각 고양이가 차지하는 높이
-      
-      // 전체 고양이들이 차지하는 총 높이
-      const totalCatsHeight = NUMBER_OF_CATS * catHeight;
-      
-      // 남은 공간을 고양이들 사이의 간격으로 균등 분배
-      const totalSpacing = trackArea - totalCatsHeight;
-      const spacing = totalSpacing / (NUMBER_OF_CATS + 1);  // 위아래 여백까지 고려하여 간격 계산
-      
       const startY = backgroundHeight + trackBgHeight;
+
+      // 중앙 트랙 위치 계산 (5번째 트랙부터 시작)
+      const centerTrackIndex = 5 - Math.floor(NUMBER_OF_CATS / 2);
 
       // 게임 시작 시간을 3초 뒤로 설정
       const gameStartTime = this.time.now + 3000;
@@ -153,9 +148,9 @@ export const PhaserGame = () => {
         const spriteKey = `cat${i + 1}`;
         const animKey = `walk${i + 1}`;
         
-        // 각 고양이의 y 위치 계산
-        // spacing으로 간격을 주고, catHeight/2를 더해 고양이를 간격 중앙에 위치시킴
-        const catY = startY + spacing * (i + 1) + (catHeight * i) + (catHeight/2);
+        // 각 고양이의 y 위치 계산 (중앙 트랙부터 순서대로)
+        const trackIndex = centerTrackIndex + i;
+        const catY = startY + (trackIndex * catHeight) + (catHeight/2);
         
         const cat = this.add.sprite(0, catY, spriteKey);
         cat.setScale(1.3);
@@ -211,13 +206,12 @@ export const PhaserGame = () => {
 
         const newTrackArea = gameHeight * 0.6;
         const newCatHeight = newTrackArea / 10;
-        const newTotalCatsHeight = NUMBER_OF_CATS * newCatHeight;
-        const newTotalSpacing = newTrackArea - newTotalCatsHeight;
-        const newSpacing = newTotalSpacing / (NUMBER_OF_CATS + 1);
         const newStartY = newBackgroundHeight + newTrackBgHeight;
+        const newCenterTrackIndex = 5 - Math.floor(NUMBER_OF_CATS / 2);
 
         cats.forEach((cat, index) => {
-          const newY = newStartY + newSpacing * (index + 1) + (newCatHeight * index) + (newCatHeight/2);
+          const trackIndex = newCenterTrackIndex + index;
+          const newY = newStartY + (trackIndex * newCatHeight) + (newCatHeight/2);
           cat.y = newY;
           
           // 텍스트 위치와 크기도 업데이트
