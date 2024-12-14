@@ -7,10 +7,10 @@ import { sendToDevvit } from './utils';
 import { useDevvitListener } from './hooks/useDevvitListener';
 import { WaitingPage } from './pages/WaitingPage';
 
-const getPage = (page: Page, { postId }: { postId: string }) => {
+const getPage = (page: Page, { postId, racing }: { postId: string, racing: number[][] }) => {
   switch (page) {
     case 'home':
-      return <HomePage postId={postId} />;
+      return <HomePage postId={postId} racing={racing} />;
     case 'pokemon':
       return <PokemonPage />;
     case 'waiting':
@@ -38,5 +38,5 @@ export const App = () => {
     return <div>Loading...</div>;
   }
 
-  return <div className="h-full">{getPage(initData?.page, { postId })}</div>;
+  return <div className="h-full">{getPage(initData?.page, { postId, racing: initData.racing })}</div>;
 };

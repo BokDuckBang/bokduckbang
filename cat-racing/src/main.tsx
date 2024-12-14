@@ -105,7 +105,8 @@ Devvit.addCustomPostType({
     });
 
     // const page = until > Date.now() ? 'waiting' : 'home';
-    const page = 'waiting';
+    // const page = 'waiting';
+    const page = 'home';
 
     return (
       <vstack height="100%" width="100%" alignment="center middle">

@@ -2,20 +2,35 @@ import { useEffect } from 'react';
 import Phaser from 'phaser';
 
 // 각 고양이의 초당 이동 거리 (정규화된 값)
-const normalizedDistances = [
-  [0.05, 0.08, 0.07, 0.09, 0.11, 0.10, 0.12, 0.13, 0.15, 0.10], // 1등
-  [0.12, 0.11, 0.10, 0.09, 0.08, 0.09, 0.10, 0.11, 0.08, 0.07],
-  [0.08, 0.10, 0.12, 0.11, 0.09, 0.08, 0.09, 0.08, 0.08, 0.07],
-  [0.10, 0.09, 0.08, 0.07, 0.11, 0.10, 0.08, 0.09, 0.07, 0.06],
-  [0.07, 0.08, 0.09, 0.10, 0.08, 0.09, 0.08, 0.08, 0.08, 0.07],
-  [0.09, 0.08, 0.07, 0.08, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07],
-  [0.08, 0.09, 0.08, 0.07, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07],
-  [0.08, 0.07, 0.08, 0.08, 0.07, 0.08, 0.08, 0.07, 0.07, 0.07],
-  [0.07, 0.08, 0.07, 0.07, 0.08, 0.07, 0.07, 0.07, 0.07, 0.07],
-  [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07]
+// const normalizedDistances = [
+//   [0.05, 0.08, 0.07, 0.09, 0.11, 0.10, 0.12, 0.13, 0.15, 0.10], // 1등
+//   [0.12, 0.11, 0.10, 0.09, 0.08, 0.09, 0.10, 0.11, 0.08, 0.07],
+//   [0.08, 0.10, 0.12, 0.11, 0.09, 0.08, 0.09, 0.08, 0.08, 0.07],
+//   [0.10, 0.09, 0.08, 0.07, 0.11, 0.10, 0.08, 0.09, 0.07, 0.06],
+//   [0.07, 0.08, 0.09, 0.10, 0.08, 0.09, 0.08, 0.08, 0.08, 0.07],
+//   [0.09, 0.08, 0.07, 0.08, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07],
+//   [0.08, 0.09, 0.08, 0.07, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07],
+//   [0.08, 0.07, 0.08, 0.08, 0.07, 0.08, 0.08, 0.07, 0.07, 0.07],
+//   [0.07, 0.08, 0.07, 0.07, 0.08, 0.07, 0.07, 0.07, 0.07, 0.07],
+//   [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07]
+// ];
+
+const NUMBER_OF_CATS = 10; // 1~10 사이의 값으로 설정 가능
+
+const CAT_TEXTS = [
+  "김치찌개",
+  "제육볶음",
+  "햄버거",
+  "치킨",
+  "피자",
+  "라면",
+  "떡볶이",
+  "초밥",
+  "파스타",
+  "카레"
 ];
 
-export const PhaserGame = () => {
+export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: number[][] }) => {
   useEffect(() => {
     const config = {
       type: Phaser.AUTO,
@@ -48,6 +63,7 @@ export const PhaserGame = () => {
     let gameWidth: number;
     let gameHeight: number;
     let startImage: Phaser.GameObjects.Image;
+    let catTexts: Phaser.GameObjects.Text[] = [];
 
     function preload(this: Phaser.Scene) {
       // 10개의 고양이 스프라이트 로드
@@ -117,19 +133,26 @@ export const PhaserGame = () => {
         });
       }
 
-      const trackArea = gameHeight * 0.6;
-      const catSpacing = trackArea / 10;
+      const trackArea = gameHeight * 0.6;  // 트랙의 전체 높이 (화면의 60%)
+      const catHeight = trackArea / 10;    // 각 고양이가 차지하는 높이
       const startY = backgroundHeight + trackBgHeight;
 
-      // 게임 시작 시간을 3초 뒤로 설정
-      const gameStartTime = this.time.now + 3000; // 3초 후 시작
+      // 중앙 트랙 위치 계산 (5번째 트랙부터 시작)
+      const centerTrackIndex = 5 - Math.floor(NUMBER_OF_CATS / 2);
 
-      // 10마리의 고양이 생성
-      for (let i = 0; i < 10; i++) {
+      // 게임 시작 시간을 3초 뒤로 설정
+      const gameStartTime = this.time.now + 3000;
+
+      // NUMBER_OF_CATS 만큼의 고양이 생성
+      for (let i = 0; i < NUMBER_OF_CATS; i++) {
         const spriteKey = `cat${i + 1}`;
         const animKey = `walk${i + 1}`;
         
-        const cat = this.add.sprite(0, startY + (catSpacing * i) + (catSpacing / 2), spriteKey);
+        // 각 고양이의 y 위치 계산 (중앙 트랙부터 순서대로)
+        const trackIndex = centerTrackIndex + i;
+        const catY = startY + (trackIndex * catHeight) + (catHeight/2);
+        
+        const cat = this.add.sprite(0, catY, spriteKey);
         cat.setScale(1.3);
         cat.play(animKey);
         
@@ -137,6 +160,15 @@ export const PhaserGame = () => {
         cat.setData('finished', false);
         
         cats.push(cat);
+
+        // 텍스트 추가
+        const text = this.add.text(20, catY - (catHeight * 0.25), CAT_TEXTS[i], {
+            fontSize: `${catHeight * 0.5}px`,
+            color: '#ffffff',
+            align: 'left'
+        });
+        text.setOrigin(0, 0);
+        catTexts.push(text);
       }
 
       // start 이미지에도 시작 시간 설정
@@ -173,11 +205,20 @@ export const PhaserGame = () => {
         }
 
         const newTrackArea = gameHeight * 0.6;
-        const newCatSpacing = newTrackArea / 10;
+        const newCatHeight = newTrackArea / 10;
         const newStartY = newBackgroundHeight + newTrackBgHeight;
+        const newCenterTrackIndex = 5 - Math.floor(NUMBER_OF_CATS / 2);
 
         cats.forEach((cat, index) => {
-          cat.y = newStartY + (newCatSpacing * index) + (newCatSpacing / 2);
+          const trackIndex = newCenterTrackIndex + index;
+          const newY = newStartY + (trackIndex * newCatHeight) + (newCatHeight/2);
+          cat.y = newY;
+          
+          // 텍스트 위치와 크기도 업데이트
+          if (catTexts[index]) {
+            catTexts[index].setPosition(20, newY - (newCatHeight * 0.25));
+            catTexts[index].setFontSize(`${newCatHeight * 0.5}px`);
+          }
         });
       });
     }
@@ -242,28 +283,33 @@ export const PhaserGame = () => {
       
           cats.forEach((cat, index) => {
             if (!cat.getData('finished')) {
-              const startTime = cat.getData('raceStartTime');
-              const elapsedSeconds = (currentTime - startTime) / 1000;
-              
-              if (elapsedSeconds <= 10) {
-                const second = Math.floor(elapsedSeconds);
-                const fraction = elapsedSeconds - second;
+                const startTime = cat.getData('raceStartTime');
+                const elapsedSeconds = (currentTime - startTime) / 1000;
                 
-                if (second < 10) {
-                  let totalDistance = 0;
-                  for (let i = 0; i < second; i++) {
-                    totalDistance += normalizedDistances[index][i];
-                  }
-                  totalDistance += normalizedDistances[index][second] * fraction;
-                  
-                  cat.x = totalDistance * gameWidth;
+                if (elapsedSeconds <= 10) {
+                    const second = Math.floor(elapsedSeconds);
+                    const fraction = elapsedSeconds - second;
+                    
+                    if (second < 10) {
+                        let totalDistance = 0;
+                        for (let i = 0; i < second; i++) {
+                            totalDistance += normalizedDistances[index][i];
+                        }
+                        totalDistance += normalizedDistances[index][second] * fraction;
+                        
+                        cat.x = totalDistance * gameWidth;
+                    }
+                } else if (elapsedSeconds <= 11) {
+                    const exitProgress = elapsedSeconds - 10;
+                    cat.x += (gameWidth * 0.5) * exitProgress;
                 }
-              } else if (elapsedSeconds <= 11) {
-                const exitProgress = elapsedSeconds - 10;
-                cat.x += (gameWidth * 0.5) * exitProgress;
-              }
+        
+                // 텍스트는 고양이의 x 좌표를 따라가되, 항상 고양이의 왼쪽에 위치
+                if (catTexts[index]) {
+                    catTexts[index].x = cat.x - 100; // 고양이보다 100픽셀 왼쪽에 위치
+                }
             }
-          });
+        });
         }
       }
 

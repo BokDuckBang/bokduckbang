@@ -2,13 +2,13 @@ import { PhaserGame } from '../components/PhaserGame';
 
 interface HomePageProps {
   postId: string;
-  racingData: number[][];
+  racing: number[][];
 }
 
-export const HomePage = ({ postId }: HomePageProps) => {
+export const HomePage = ({ postId, racing }: HomePageProps) => {
   return (
     <div className="w-full h-full">
-      <PhaserGame />
+      <PhaserGame normalizedDistances={racing} />
     </div>
   );
 };
