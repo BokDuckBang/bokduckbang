@@ -15,7 +15,20 @@ const normalizedDistances = [
   [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07]
 ];
 
-const NUMBER_OF_CATS = 2; // 1~10 사이의 값으로 설정 가능
+const NUMBER_OF_CATS = 10; // 1~10 사이의 값으로 설정 가능
+
+const CAT_TEXTS = [
+  "김치찌개",
+  "제육볶음",
+  "햄버거",
+  "치킨",
+  "피자",
+  "라면",
+  "떡볶이",
+  "초밥",
+  "파스타",
+  "카레"
+];
 
 export const PhaserGame = () => {
   useEffect(() => {
@@ -50,6 +63,7 @@ export const PhaserGame = () => {
     let gameWidth: number;
     let gameHeight: number;
     let startImage: Phaser.GameObjects.Image;
+    let catTexts: Phaser.GameObjects.Text[] = [];
 
     function preload(this: Phaser.Scene) {
       // 10개의 고양이 스프라이트 로드
@@ -151,6 +165,15 @@ export const PhaserGame = () => {
         cat.setData('finished', false);
         
         cats.push(cat);
+
+        // 텍스트 추가
+        const text = this.add.text(20, catY - (catHeight/2), CAT_TEXTS[i], {
+            fontSize: `${catHeight * 0.7}px`,
+            color: '#ffffff',
+            align: 'left'
+        });
+        text.setOrigin(0, 0);
+        catTexts.push(text);
       }
 
       // start 이미지에도 시작 시간 설정
@@ -194,7 +217,14 @@ export const PhaserGame = () => {
         const newStartY = newBackgroundHeight + newTrackBgHeight;
 
         cats.forEach((cat, index) => {
-          cat.y = newStartY + newSpacing * (index + 1) + (newCatHeight * index) + (newCatHeight/2);
+          const newY = newStartY + newSpacing * (index + 1) + (newCatHeight * index) + (newCatHeight/2);
+          cat.y = newY;
+          
+          // 텍스트 위치와 크기도 업데이트
+          if (catTexts[index]) {
+            catTexts[index].setPosition(20, newY - (newCatHeight/2));
+            catTexts[index].setFontSize(`${newCatHeight}px`);
+          }
         });
       });
     }
@@ -278,6 +308,11 @@ export const PhaserGame = () => {
               } else if (elapsedSeconds <= 11) {
                 const exitProgress = elapsedSeconds - 10;
                 cat.x += (gameWidth * 0.5) * exitProgress;
+              }
+
+              // 텍스트는 고양이의 x 좌표와 상관없이 항상 왼쪽에 고정
+              if (catTexts[index]) {
+                catTexts[index].x = 20;
               }
             }
           });
