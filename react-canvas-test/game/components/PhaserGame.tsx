@@ -49,7 +49,8 @@ export const PhaserGame = () => {
     let gameHeight: number;
 
     function preload(this: Phaser.Scene) {
-      for (let i = 1; i <= 7; i++) {
+      // 9개의 고양이 스프라이트 로드
+      for (let i = 1; i <= 9; i++) {
         this.load.spritesheet(`cat${i}`, `/cat${i}-sprite.png`, { 
           frameWidth: 32,
           frameHeight: 32
@@ -91,8 +92,8 @@ export const PhaserGame = () => {
         tracks.push(track);
       }
 
-      // 7개의 고양이 애니메이션 생성
-      for (let i = 1; i <= 7; i++) {
+      // 9개의 고양이 애니메이션 생성
+      for (let i = 1; i <= 9; i++) {
         this.anims.create({
           key: `walk${i}`,
           frames: this.anims.generateFrameNumbers(`cat${i}`, { 
@@ -113,7 +114,7 @@ export const PhaserGame = () => {
         let spriteKey = 'cat1';
         let animKey = 'walk1';
         
-        if (i < 7) {
+        if (i < 9) {  // 9번째 고양이까지 각자의 스프라이트 사용
           spriteKey = `cat${i + 1}`;
           animKey = `walk${i + 1}`;
         }
