@@ -95,21 +95,42 @@ export const PhaserGame = () => {
       const catSpacing = trackArea / 10; // 각 고양이당 공간 (트랙 영역의 1/10)
       const startY = backgroundHeight + trackBgHeight; // 고양이 시작 Y 위치
 
+      // 고양이별 도착 시간 설정 (초 단위)
+      const arrivalTimes = [
+        10,  // 1등: 10초
+        13,  // 2등: 13초
+        15,  // 3등: 15초
+        17,  // 4등: 17초
+        17,  // 5등: 17초 (4등과 동일)
+        18,  // 6등: 18초
+        18,  // 7등: 18초 (6등과 동일)
+        19,  // 8등: 19초
+        19,  // 9등: 19초 (8등과 동일)
+        20   // 10등: 20초
+      ];
+
       // 10마리의 고양이 생성
       for (let i = 0; i < 10; i++) {
         let spriteKey = 'cat1';
         let animKey = 'walk1';
         
         if (i < 7) {
-          // 1~7번 고양이는 각각의 스프라이트 사용
           spriteKey = `cat${i + 1}`;
           animKey = `walk${i + 1}`;
         }
-        // 8~10번 고양이는 cat1 사용 (기본값 유지)
         
         const cat = this.add.sprite(0, startY + (catSpacing * i) + (catSpacing / 2), spriteKey);
         cat.setScale(1.3);
         cat.play(animKey);
+        
+        // 각 고양이의 속도 계산
+        // 게임 너비를 도착 시간으로 나누어 초당 이동 거리 계산
+        const speed = gameWidth / (arrivalTimes[i] * 60); // 60은 프레임레이트
+        
+        // 고양이 객체에 추가 속성 부여
+        cat.setData('speed', speed);
+        cat.setData('finished', false);
+        
         cats.push(cat);
       }
 
@@ -182,10 +203,15 @@ export const PhaserGame = () => {
       });
 
       cats.forEach(cat => {
-        if (cat.x < gameWidth) {
-          cat.x += 2;
-        } else {
-          cat.x = 0;
+        // 아직 결승선에 도착하지 않은 고양이만 이동
+        if (!cat.getData('finished')) {
+          cat.x += cat.getData('speed');
+          
+          // 결승선 도착 체크
+          if (cat.x >= gameWidth) {
+            cat.x = gameWidth - (cat.width * cat.scale); // 화면 끝에 정확히 위치
+            cat.setData('finished', true);
+          }
         }
       });
     }
