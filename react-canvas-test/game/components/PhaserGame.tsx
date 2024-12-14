@@ -41,15 +41,15 @@ export const PhaserGame = () => {
     }
 
     function create(this: Phaser.Scene) {
-      // 현재 게임 캔버스의 크기 가져오기
       gameWidth = this.scale.width;
       gameHeight = this.scale.height;
+      const backgroundHeight = gameHeight * 0.3;
 
       // 배경 이미지 두 개 생성
       for (let i = 0; i < 2; i++) {
         const bg = this.add.image(i * gameWidth, 0, 'background');
         bg.setOrigin(0, 0);
-        bg.setDisplaySize(gameWidth, gameHeight);
+        bg.setDisplaySize(gameWidth + 1, backgroundHeight);
         backgrounds.push(bg);
       }
 
@@ -63,30 +63,29 @@ export const PhaserGame = () => {
         repeat: -1
       });
 
-      // 화면 높이에 맞춰 고양이들 배치
-      const catSpacing = gameHeight / 6; // 6등분하여 5마리 배치
+      const remainingHeight = gameHeight - backgroundHeight;
+      const catSpacing = remainingHeight / 6;
       for (let i = 0; i < 5; i++) {
-        const cat = this.add.sprite(0, catSpacing + (i * catSpacing), 'cat');
-        cat.setScale(1.3);
+        const cat = this.add.sprite(0, backgroundHeight + catSpacing + (i * catSpacing), 'cat');
+        cat.setScale(2);
         cat.play('walk');
         cats.push(cat);
       }
 
-      // 화면 크기 변경 이벤트 리스너
       this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
         gameWidth = gameSize.width;
         gameHeight = gameSize.height;
+        const newBackgroundHeight = gameHeight * 0.3;
         
-        // 배경 크기 업데이트
         backgrounds.forEach((bg, index) => {
-          bg.setDisplaySize(gameWidth, gameHeight);
-          if (index === 1) bg.x = gameWidth;
+          bg.setDisplaySize(gameWidth + 1, newBackgroundHeight);
+          bg.x = index * gameWidth;
         });
 
-        // 고양이 위치 업데이트
-        const newCatSpacing = gameHeight / 6;
+        const newRemainingHeight = gameHeight - newBackgroundHeight;
+        const newCatSpacing = newRemainingHeight / 6;
         cats.forEach((cat, index) => {
-          cat.y = newCatSpacing + (index * newCatSpacing);
+          cat.y = newBackgroundHeight + newCatSpacing + (index * newCatSpacing);
         });
       });
     }
@@ -96,12 +95,15 @@ export const PhaserGame = () => {
       backgrounds.forEach(bg => {
         bg.x -= 1;
 
+        // 배경이 완전히 왼쪽으로 벗어나기 전에 재배치
         if (bg.x <= -gameWidth) {
-          bg.x = gameWidth;
+          const otherBg = backgrounds.find(b => b !== bg);
+          if (otherBg) {
+            bg.x = otherBg.x + gameWidth - 1;
+          }
         }
       });
 
-      // 고양이 이동
       cats.forEach(cat => {
         if (cat.x < gameWidth) {
           cat.x += 2;
@@ -116,7 +118,6 @@ export const PhaserGame = () => {
     };
   }, []);
 
-  // 컨테이너 스타일 추가
   return (
     <div 
       id="phaser-game" 
