@@ -15,6 +15,8 @@ const normalizedDistances = [
   [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07]
 ];
 
+const NUMBER_OF_CATS = 2; // 1~10 사이의 값으로 설정 가능
+
 export const PhaserGame = () => {
   useEffect(() => {
     const config = {
@@ -117,19 +119,31 @@ export const PhaserGame = () => {
         });
       }
 
-      const trackArea = gameHeight * 0.6;
-      const catSpacing = trackArea / 10;
+      const trackArea = gameHeight * 0.6;  // 트랙의 전체 높이 (화면의 60%)
+      const catHeight = trackArea / 10;    // 각 고양이가 차지하는 높이
+      
+      // 전체 고양이들이 차지하는 총 높이
+      const totalCatsHeight = NUMBER_OF_CATS * catHeight;
+      
+      // 남은 공간을 고양이들 사이의 간격으로 균등 분배
+      const totalSpacing = trackArea - totalCatsHeight;
+      const spacing = totalSpacing / (NUMBER_OF_CATS + 1);  // 위아래 여백까지 고려하여 간격 계산
+      
       const startY = backgroundHeight + trackBgHeight;
 
       // 게임 시작 시간을 3초 뒤로 설정
-      const gameStartTime = this.time.now + 3000; // 3초 후 시작
+      const gameStartTime = this.time.now + 3000;
 
-      // 10마리의 고양이 생성
-      for (let i = 0; i < 10; i++) {
+      // NUMBER_OF_CATS 만큼의 고양이 생성
+      for (let i = 0; i < NUMBER_OF_CATS; i++) {
         const spriteKey = `cat${i + 1}`;
         const animKey = `walk${i + 1}`;
         
-        const cat = this.add.sprite(0, startY + (catSpacing * i) + (catSpacing / 2), spriteKey);
+        // 각 고양이의 y 위치 계산
+        // spacing으로 간격을 주고, catHeight/2를 더해 고양이를 간격 중앙에 위치시킴
+        const catY = startY + spacing * (i + 1) + (catHeight * i) + (catHeight/2);
+        
+        const cat = this.add.sprite(0, catY, spriteKey);
         cat.setScale(1.3);
         cat.play(animKey);
         
@@ -173,11 +187,14 @@ export const PhaserGame = () => {
         }
 
         const newTrackArea = gameHeight * 0.6;
-        const newCatSpacing = newTrackArea / 10;
+        const newCatHeight = newTrackArea / 10;
+        const newTotalCatsHeight = NUMBER_OF_CATS * newCatHeight;
+        const newTotalSpacing = newTrackArea - newTotalCatsHeight;
+        const newSpacing = newTotalSpacing / (NUMBER_OF_CATS + 1);
         const newStartY = newBackgroundHeight + newTrackBgHeight;
 
         cats.forEach((cat, index) => {
-          cat.y = newStartY + (newCatSpacing * index) + (newCatSpacing / 2);
+          cat.y = newStartY + newSpacing * (index + 1) + (newCatHeight * index) + (newCatHeight/2);
         });
       });
     }
