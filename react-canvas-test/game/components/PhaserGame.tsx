@@ -47,10 +47,11 @@ export const PhaserGame = () => {
     let tracks: Phaser.GameObjects.Image[] = [];
     let gameWidth: number;
     let gameHeight: number;
+    let startImage: Phaser.GameObjects.Image;
 
     function preload(this: Phaser.Scene) {
-      // 9개의 고양이 스프라이트 로드
-      for (let i = 1; i <= 9; i++) {
+      // 10개의 고양이 스프라이트 로드
+      for (let i = 1; i <= 10; i++) {
         this.load.spritesheet(`cat${i}`, `/cat${i}-sprite.png`, { 
           frameWidth: 32,
           frameHeight: 32
@@ -59,6 +60,8 @@ export const PhaserGame = () => {
       this.load.image('background', '/bg.png');
       this.load.image('track-bg', '/track-bg.png');
       this.load.image('track', '/track.png');
+      this.load.image('start', '/start.png');
+      this.load.image('finish', '/finish.png');
     }
 
     function create(this: Phaser.Scene) {
@@ -92,8 +95,17 @@ export const PhaserGame = () => {
         tracks.push(track);
       }
 
-      // 9개의 고양이 애니메이션 생성
-      for (let i = 1; i <= 9; i++) {
+      // 단일 start 이미지 생성
+      startImage = this.add.image(
+        0, 
+        backgroundHeight + trackBgHeight,
+        'start'
+      );
+      startImage.setOrigin(0, 0);
+      startImage.setDisplaySize(startImage.width, trackHeight + 2);
+
+      // 10개의 고양이 애니메이션 생성
+      for (let i = 1; i <= 10; i++) {
         this.anims.create({
           key: `walk${i}`,
           frames: this.anims.generateFrameNumbers(`cat${i}`, { 
@@ -109,25 +121,26 @@ export const PhaserGame = () => {
       const catSpacing = trackArea / 10;
       const startY = backgroundHeight + trackBgHeight;
 
+      // 게임 시작 시간을 3초 뒤로 설정
+      const gameStartTime = this.time.now + 3000; // 3초 후 시작
+
       // 10마리의 고양이 생성
       for (let i = 0; i < 10; i++) {
-        let spriteKey = 'cat1';
-        let animKey = 'walk1';
-        
-        if (i < 9) {  // 9번째 고양이까지 각자의 스프라이트 사용
-          spriteKey = `cat${i + 1}`;
-          animKey = `walk${i + 1}`;
-        }
+        const spriteKey = `cat${i + 1}`;
+        const animKey = `walk${i + 1}`;
         
         const cat = this.add.sprite(0, startY + (catSpacing * i) + (catSpacing / 2), spriteKey);
         cat.setScale(1.3);
         cat.play(animKey);
         
-        cat.setData('raceStartTime', this.time.now);
+        cat.setData('raceStartTime', gameStartTime);
         cat.setData('finished', false);
         
         cats.push(cat);
       }
+
+      // start 이미지에도 시작 시간 설정
+      startImage.setData('startTime', gameStartTime);
 
       this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
         gameWidth = gameSize.width;
@@ -153,6 +166,12 @@ export const PhaserGame = () => {
           track.y = newBackgroundHeight + newTrackBgHeight;
         });
 
+        // start 이미지 크기 조정
+        if (startImage) {
+          startImage.setDisplaySize(startImage.width, newTrackHeight + 2);
+          startImage.y = newBackgroundHeight + newTrackBgHeight - 1;
+        }
+
         const newTrackArea = gameHeight * 0.6;
         const newCatSpacing = newTrackArea / 10;
         const newStartY = newBackgroundHeight + newTrackBgHeight;
@@ -164,6 +183,10 @@ export const PhaserGame = () => {
     }
 
     function update(this: Phaser.Scene) {
+      const currentTime = this.time.now;
+      const gameStarted = currentTime >= cats[0].getData('raceStartTime');
+
+      // 게임 시작 전에는 배경만 움직임
       backgrounds.forEach(bg => {
         bg.x -= 1;
         if (bg.x <= -gameWidth) {
@@ -174,51 +197,58 @@ export const PhaserGame = () => {
         }
       });
 
-      trackBgs.forEach(trackBg => {
-        trackBg.x -= 2;
-        if (trackBg.x <= -gameWidth) {
-          const otherTrackBg = trackBgs.find(t => t !== trackBg);
-          if (otherTrackBg) {
-            trackBg.x = otherTrackBg.x + gameWidth - 4;
-          }
-        }
-      });
-
-      tracks.forEach(track => {
-        track.x -= 2;
-        if (track.x <= -gameWidth) {
-          const otherTrack = tracks.find(t => t !== track);
-          if (otherTrack) {
-            track.x = otherTrack.x + gameWidth - 4;
-          }
-        }
-      });
-
-      const currentTime = this.time.now;
-      cats.forEach((cat, index) => {
-        if (!cat.getData('finished')) {
-          const startTime = cat.getData('raceStartTime');
-          const elapsedSeconds = (currentTime - startTime) / 1000;
-          
-          if (elapsedSeconds <= 10) {
-            const second = Math.floor(elapsedSeconds);
-            const fraction = elapsedSeconds - second;
-            
-            if (second < 10) {
-              let totalDistance = 0;
-              for (let i = 0; i < second; i++) {
-                totalDistance += normalizedDistances[index][i];
-              }
-              totalDistance += normalizedDistances[index][second] * fraction;
-              
-              cat.x = totalDistance * gameWidth;
+      // 게임 시작 후에만 트랙과 고양이 움직임
+      if (gameStarted) {
+        trackBgs.forEach(trackBg => {
+          trackBg.x -= 2;
+          if (trackBg.x <= -gameWidth) {
+            const otherTrackBg = trackBgs.find(t => t !== trackBg);
+            if (otherTrackBg) {
+              trackBg.x = otherTrackBg.x + gameWidth - 4;
             }
-          } else if (elapsedSeconds <= 11) {
-            const exitProgress = elapsedSeconds - 10;
-            cat.x += (gameWidth * 0.5) * exitProgress;
           }
+        });
+
+        tracks.forEach(track => {
+          track.x -= 2;
+          if (track.x <= -gameWidth) {
+            const otherTrack = tracks.find(t => t !== track);
+            if (otherTrack) {
+              track.x = otherTrack.x + gameWidth - 4;
+            }
+          }
+        });
+
+        // start 이미지 업데이트
+        if (startImage) {
+          startImage.x -= 0.4;
         }
-      });
+
+        cats.forEach((cat, index) => {
+          if (!cat.getData('finished')) {
+            const startTime = cat.getData('raceStartTime');
+            const elapsedSeconds = (currentTime - startTime) / 1000;
+            
+            if (elapsedSeconds <= 10) {
+              const second = Math.floor(elapsedSeconds);
+              const fraction = elapsedSeconds - second;
+              
+              if (second < 10) {
+                let totalDistance = 0;
+                for (let i = 0; i < second; i++) {
+                  totalDistance += normalizedDistances[index][i];
+                }
+                totalDistance += normalizedDistances[index][second] * fraction;
+                
+                cat.x = totalDistance * gameWidth;
+              }
+            } else if (elapsedSeconds <= 11) {
+              const exitProgress = elapsedSeconds - 10;
+              cat.x += (gameWidth * 0.5) * exitProgress;
+            }
+          }
+        });
+      }
     }
 
     return () => {
