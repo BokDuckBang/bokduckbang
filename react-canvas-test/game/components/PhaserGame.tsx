@@ -90,9 +90,8 @@ export const PhaserGame = () => {
         });
       }
 
-      const remainingHeight = gameHeight - backgroundHeight - trackBgHeight;
       const trackArea = gameHeight * 0.6; // 트랙 영역 (전체 높이의 60%)
-      const catSpacing = trackArea / 10; // 각 고양이당 공간 (트랙 영역의 1/10)
+      const catSpacing = trackArea / 10; // 각 고양이당 공간
       const startY = backgroundHeight + trackBgHeight; // 고양이 시작 Y 위치
 
       // 고양이별 도착 시간 설정 (초 단위)
@@ -101,11 +100,11 @@ export const PhaserGame = () => {
         13,  // 2등: 13초
         15,  // 3등: 15초
         17,  // 4등: 17초
-        17,  // 5등: 17초 (4등과 동일)
+        17,  // 5등: 17초
         18,  // 6등: 18초
-        18,  // 7등: 18초 (6등과 동일)
+        18,  // 7등: 18초
         19,  // 8등: 19초
-        19,  // 9등: 19초 (8등과 동일)
+        19,  // 9등: 19초
         20   // 10등: 20초
       ];
 
@@ -123,12 +122,10 @@ export const PhaserGame = () => {
         cat.setScale(1.3);
         cat.play(animKey);
         
-        // 각 고양이의 속도 계산
-        // 게임 너비를 도착 시간으로 나누어 초당 이동 거리 계산
-        const speed = gameWidth / (arrivalTimes[i] * 60); // 60은 프레임레이트
+        const baseSpeed = gameWidth / (arrivalTimes[i] * 60);
         
-        // 고양이 객체에 추가 속성 부여
-        cat.setData('speed', speed);
+        cat.setData('baseSpeed', baseSpeed);
+        cat.setData('phase', Math.random() * Math.PI * 2);
         cat.setData('finished', false);
         
         cats.push(cat);
@@ -202,14 +199,37 @@ export const PhaserGame = () => {
         }
       });
 
-      cats.forEach(cat => {
-        // 아직 결승선에 도착하지 않은 고양이만 이동
+      cats.forEach((cat, index) => {
         if (!cat.getData('finished')) {
-          cat.x += cat.getData('speed');
+          const baseSpeed = cat.getData('baseSpeed');
+          const phase = cat.getData('phase');
+          const time = this.time.now * 0.001; // 현재 시간을 초 단위로 변환
           
-          // 결승선 도착 체크
+          let speedVariation;
+          const progress = cat.x / gameWidth; // 진행률 (0~1)
+          
+          if (index === 0) { // 1등 고양이는 특별한 패턴
+            // 초반에는 느리게, 후반에 급격히 가속
+            const speedCurve = Math.pow(progress, 0.3); // 진행률에 따른 속도 커브
+            const lateSpurt = Math.max(0, (progress - 0.7) * 3); // 후반 스퍼트
+            
+            // 기본적인 사인 변동 + 후반 가속
+            speedVariation = (Math.sin(time * 3 + phase) * 0.5 - 0.3) * (1 - lateSpurt) +
+                            lateSpurt * 0.8; // 마지막 스퍼트는 80% 빠르게
+          } else {
+            // 다른 고양이들은 더 큰 변동폭을 가짐
+            const variationScale = 0.6; // 60%까지 변동
+            speedVariation = Math.sin(time * 2 + phase) * variationScale;
+            
+            // 진행률에 따라 변동폭 조절 (후반에는 변동 감소)
+            speedVariation *= (1 - Math.pow(progress, 2));
+          }
+          
+          const currentSpeed = baseSpeed * (1 + speedVariation);
+          cat.x += currentSpeed;
+
           if (cat.x >= gameWidth) {
-            cat.x = gameWidth - (cat.width * cat.scale); // 화면 끝에 정확히 위치
+            cat.x = gameWidth - (cat.width * cat.scale);
             cat.setData('finished', true);
           }
         }
