@@ -29,23 +29,33 @@ export const PhaserGame = () => {
 
     let cats: Phaser.GameObjects.Sprite[] = [];
     let backgrounds: Phaser.GameObjects.Image[] = [];
+    let tracks: Phaser.GameObjects.Image[] = [];
     let gameWidth: number;
     let gameHeight: number;
 
     function preload(this: Phaser.Scene) {
-      this.load.spritesheet('cat', '/cat1-sprite.png', { 
+      this.load.spritesheet('cat1', '/cat1-sprite.png', { 
         frameWidth: 32,
         frameHeight: 32
       });
-      this.load.image('background', '/space3.png');
+      this.load.spritesheet('cat2', '/cat2-sprite.png', { 
+        frameWidth: 32,
+        frameHeight: 32
+      });
+      this.load.spritesheet('cat3', '/cat3-sprite.png', { 
+        frameWidth: 32,
+        frameHeight: 32
+      });
+      this.load.image('background', '/bg.png');
+      this.load.image('track', '/track.png');
     }
 
     function create(this: Phaser.Scene) {
       gameWidth = this.scale.width;
       gameHeight = this.scale.height;
       const backgroundHeight = gameHeight * 0.3;
+      const trackHeight = gameHeight * 0.7;
 
-      // 배경 이미지 두 개 생성
       for (let i = 0; i < 2; i++) {
         const bg = this.add.image(i * gameWidth, 0, 'background');
         bg.setOrigin(0, 0);
@@ -53,9 +63,36 @@ export const PhaserGame = () => {
         backgrounds.push(bg);
       }
 
+      for (let i = 0; i < 2; i++) {
+        const track = this.add.image(i * gameWidth, backgroundHeight, 'track');
+        track.setOrigin(0, 0);
+        track.setDisplaySize(gameWidth + 4, trackHeight);
+        tracks.push(track);
+      }
+
       this.anims.create({
-        key: 'walk',
-        frames: this.anims.generateFrameNumbers('cat', { 
+        key: 'walk1',
+        frames: this.anims.generateFrameNumbers('cat1', { 
+          start: 0,
+          end: 3
+        }),
+        frameRate: 8,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'walk2',
+        frames: this.anims.generateFrameNumbers('cat2', { 
+          start: 0,
+          end: 3
+        }),
+        frameRate: 8,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'walk3',
+        frames: this.anims.generateFrameNumbers('cat3', { 
           start: 0,
           end: 3
         }),
@@ -65,10 +102,14 @@ export const PhaserGame = () => {
 
       const remainingHeight = gameHeight - backgroundHeight;
       const catSpacing = remainingHeight / 6;
+      
       for (let i = 0; i < 5; i++) {
-        const cat = this.add.sprite(0, backgroundHeight + catSpacing + (i * catSpacing), 'cat');
-        cat.setScale(2);
-        cat.play('walk');
+        const spriteKey = i === 1 ? 'cat2' : 'cat1';
+        const animKey = i === 1 ? 'walk2' : 'walk1';
+        
+        const cat = this.add.sprite(0, backgroundHeight + catSpacing + (i * catSpacing), spriteKey);
+        cat.setScale(1.3);
+        cat.play(animKey);
         cats.push(cat);
       }
 
@@ -76,10 +117,17 @@ export const PhaserGame = () => {
         gameWidth = gameSize.width;
         gameHeight = gameSize.height;
         const newBackgroundHeight = gameHeight * 0.3;
+        const newTrackHeight = gameHeight * 0.7;
         
         backgrounds.forEach((bg, index) => {
           bg.setDisplaySize(gameWidth + 1, newBackgroundHeight);
           bg.x = index * gameWidth;
+        });
+
+        tracks.forEach((track, index) => {
+          track.setDisplaySize(gameWidth + 4, newTrackHeight);
+          track.x = index * gameWidth;
+          track.y = newBackgroundHeight;
         });
 
         const newRemainingHeight = gameHeight - newBackgroundHeight;
@@ -91,15 +139,24 @@ export const PhaserGame = () => {
     }
 
     function update(this: Phaser.Scene) {
-      // 배경 스크롤링
       backgrounds.forEach(bg => {
         bg.x -= 1;
 
-        // 배경이 완전히 왼쪽으로 벗어나기 전에 재배치
         if (bg.x <= -gameWidth) {
           const otherBg = backgrounds.find(b => b !== bg);
           if (otherBg) {
             bg.x = otherBg.x + gameWidth - 1;
+          }
+        }
+      });
+
+      tracks.forEach(track => {
+        track.x -= 2;
+
+        if (track.x <= -gameWidth) {
+          const otherTrack = tracks.find(t => t !== track);
+          if (otherTrack) {
+            track.x = otherTrack.x + gameWidth - 4;
           }
         }
       });
