@@ -9,6 +9,20 @@ Devvit.configure({
   redis: true,
 });
 
+function getRacingData(size: number) {
+  const data = Array.from({ length: size }).map((_, i) => {
+    return Array.from({ length: 10 }).map((_, j) => {
+      return Math.round(Math.random() * 1000);
+    });
+  })
+  const sum = data.map(d => {
+      return d.reduce((acc, c) => acc + c, 0)
+  })
+
+  const max = Math.max(...sum);
+  const result = data.map(d => d.map(n => Math.round(n * 1000 / max) / 1000))
+  return result;
+}
 
 const myForm = Devvit.createForm(
   {
@@ -36,6 +50,7 @@ const myForm = Devvit.createForm(
     const title = event.values.title ?? 'Cat Racing Game';
     const until = new Date(Date.now() + min * 60 * 1000);
     const options = event.values.options ?? '';
+    const size = options.split(',').length ?? 0;
     ui.showToast({ text: 'Creating a cat racing game...' });
 
     const subreddit = await reddit.getCurrentSubreddit();
@@ -49,8 +64,12 @@ const myForm = Devvit.createForm(
         </vstack>
       ),
     });
+
+
+
     redis.set(`deadline:${post.id}`, String(until.getTime()));
     redis.set(`options:${post.id}`, options);
+    redis.set(`racing:${post.id}`, JSON.stringify(getRacingData(size)));
     ui.navigateTo(post);
   }
 );
@@ -78,6 +97,12 @@ Devvit.addCustomPostType({
         until: Number(stored),
       };
     });
+    const [{ racing }] = useState<{ racing: number[][] }>(async () => {
+      const stored = await context.redis.get(`racing:${context.postId}`);
+      return {
+        racing: JSON.parse(stored ?? '[]'),
+      };
+    });
 
     // const page = until > Date.now() ? 'waiting' : 'home';
     const page = 'waiting';
@@ -100,6 +125,7 @@ Devvit.addCustomPostType({
                   payload: {
                     page: page,
                     postId: context.postId!,
+                    racing: racing,
                   },
                 });
                 break;

@@ -14,6 +14,7 @@ export type BlocksToWebviewMessage =
     payload: {
       postId: string;
       page: Page;
+      racing: number[][];
     };
   }
   | {

@@ -2,6 +2,7 @@ import { PhaserGame } from '../components/PhaserGame';
 
 interface HomePageProps {
   postId: string;
+  racingData: number[][];
 }
 
 export const HomePage = ({ postId }: HomePageProps) => {
