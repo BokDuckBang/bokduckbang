@@ -167,8 +167,8 @@ export const PhaserGame = () => {
         cats.push(cat);
 
         // 텍스트 추가
-        const text = this.add.text(20, catY - (catHeight/2), CAT_TEXTS[i], {
-            fontSize: `${catHeight * 0.7}px`,
+        const text = this.add.text(20, catY - (catHeight * 0.25), CAT_TEXTS[i], {
+            fontSize: `${catHeight * 0.5}px`,
             color: '#ffffff',
             align: 'left'
         });
@@ -222,8 +222,8 @@ export const PhaserGame = () => {
           
           // 텍스트 위치와 크기도 업데이트
           if (catTexts[index]) {
-            catTexts[index].setPosition(20, newY - (newCatHeight/2));
-            catTexts[index].setFontSize(`${newCatHeight}px`);
+            catTexts[index].setPosition(20, newY - (newCatHeight * 0.25));
+            catTexts[index].setFontSize(`${newCatHeight * 0.5}px`);
           }
         });
       });
@@ -289,33 +289,33 @@ export const PhaserGame = () => {
       
           cats.forEach((cat, index) => {
             if (!cat.getData('finished')) {
-              const startTime = cat.getData('raceStartTime');
-              const elapsedSeconds = (currentTime - startTime) / 1000;
-              
-              if (elapsedSeconds <= 10) {
-                const second = Math.floor(elapsedSeconds);
-                const fraction = elapsedSeconds - second;
+                const startTime = cat.getData('raceStartTime');
+                const elapsedSeconds = (currentTime - startTime) / 1000;
                 
-                if (second < 10) {
-                  let totalDistance = 0;
-                  for (let i = 0; i < second; i++) {
-                    totalDistance += normalizedDistances[index][i];
-                  }
-                  totalDistance += normalizedDistances[index][second] * fraction;
-                  
-                  cat.x = totalDistance * gameWidth;
+                if (elapsedSeconds <= 10) {
+                    const second = Math.floor(elapsedSeconds);
+                    const fraction = elapsedSeconds - second;
+                    
+                    if (second < 10) {
+                        let totalDistance = 0;
+                        for (let i = 0; i < second; i++) {
+                            totalDistance += normalizedDistances[index][i];
+                        }
+                        totalDistance += normalizedDistances[index][second] * fraction;
+                        
+                        cat.x = totalDistance * gameWidth;
+                    }
+                } else if (elapsedSeconds <= 11) {
+                    const exitProgress = elapsedSeconds - 10;
+                    cat.x += (gameWidth * 0.5) * exitProgress;
                 }
-              } else if (elapsedSeconds <= 11) {
-                const exitProgress = elapsedSeconds - 10;
-                cat.x += (gameWidth * 0.5) * exitProgress;
-              }
-
-              // 텍스트는 고양이의 x 좌표와 상관없이 항상 왼쪽에 고정
-              if (catTexts[index]) {
-                catTexts[index].x = 20;
-              }
+        
+                // 텍스트는 고양이의 x 좌표를 따라가되, 항상 고양이의 왼쪽에 위치
+                if (catTexts[index]) {
+                    catTexts[index].x = cat.x - 100; // 고양이보다 100픽셀 왼쪽에 위치
+                }
             }
-          });
+        });
         }
       }
 
