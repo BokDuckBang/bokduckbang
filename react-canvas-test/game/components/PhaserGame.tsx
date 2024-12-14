@@ -102,7 +102,7 @@ export const PhaserGame = () => {
         'start'
       );
       startImage.setOrigin(0, 0);
-      startImage.setDisplaySize(startImage.width, trackHeight + 2);
+      startImage.setDisplaySize(startImage.width, trackHeight);
 
       // 10개의 고양이 애니메이션 생성
       for (let i = 1; i <= 10; i++) {
