@@ -1,6 +1,20 @@
 import { useEffect } from 'react';
 import Phaser from 'phaser';
 
+// 각 고양이의 초당 이동 거리 (정규화된 값)
+const normalizedDistances = [
+  [0.05, 0.08, 0.07, 0.09, 0.11, 0.10, 0.12, 0.13, 0.15, 0.10], // 1등
+  [0.12, 0.11, 0.10, 0.09, 0.08, 0.09, 0.10, 0.11, 0.08, 0.07],
+  [0.08, 0.10, 0.12, 0.11, 0.09, 0.08, 0.09, 0.08, 0.08, 0.07],
+  [0.10, 0.09, 0.08, 0.07, 0.11, 0.10, 0.08, 0.09, 0.07, 0.06],
+  [0.07, 0.08, 0.09, 0.10, 0.08, 0.09, 0.08, 0.08, 0.08, 0.07],
+  [0.09, 0.08, 0.07, 0.08, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07],
+  [0.08, 0.09, 0.08, 0.07, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07],
+  [0.08, 0.07, 0.08, 0.08, 0.07, 0.08, 0.08, 0.07, 0.07, 0.07],
+  [0.07, 0.08, 0.07, 0.07, 0.08, 0.07, 0.07, 0.07, 0.07, 0.07],
+  [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07]
+];
+
 export const PhaserGame = () => {
   useEffect(() => {
     const config = {
@@ -90,23 +104,9 @@ export const PhaserGame = () => {
         });
       }
 
-      const trackArea = gameHeight * 0.6; // 트랙 영역 (전체 높이의 60%)
-      const catSpacing = trackArea / 10; // 각 고양이당 공간
-      const startY = backgroundHeight + trackBgHeight; // 고양이 시작 Y 위치
-
-      // 고양이별 도착 시간 설정 (초 단위)
-      const arrivalTimes = [
-        10,  // 1등: 10초
-        13,  // 2등: 13초
-        15,  // 3등: 15초
-        17,  // 4등: 17초
-        17,  // 5등: 17초
-        18,  // 6등: 18초
-        18,  // 7등: 18초
-        19,  // 8등: 19초
-        19,  // 9등: 19초
-        20   // 10등: 20초
-      ];
+      const trackArea = gameHeight * 0.6;
+      const catSpacing = trackArea / 10;
+      const startY = backgroundHeight + trackBgHeight;
 
       // 10마리의 고양이 생성
       for (let i = 0; i < 10; i++) {
@@ -122,10 +122,7 @@ export const PhaserGame = () => {
         cat.setScale(1.3);
         cat.play(animKey);
         
-        const baseSpeed = gameWidth / (arrivalTimes[i] * 60);
-        
-        cat.setData('baseSpeed', baseSpeed);
-        cat.setData('phase', Math.random() * Math.PI * 2);
+        cat.setData('raceStartTime', this.time.now);
         cat.setData('finished', false);
         
         cats.push(cat);
@@ -168,7 +165,6 @@ export const PhaserGame = () => {
     function update(this: Phaser.Scene) {
       backgrounds.forEach(bg => {
         bg.x -= 1;
-
         if (bg.x <= -gameWidth) {
           const otherBg = backgrounds.find(b => b !== bg);
           if (otherBg) {
@@ -179,7 +175,6 @@ export const PhaserGame = () => {
 
       trackBgs.forEach(trackBg => {
         trackBg.x -= 2;
-
         if (trackBg.x <= -gameWidth) {
           const otherTrackBg = trackBgs.find(t => t !== trackBg);
           if (otherTrackBg) {
@@ -190,7 +185,6 @@ export const PhaserGame = () => {
 
       tracks.forEach(track => {
         track.x -= 2;
-
         if (track.x <= -gameWidth) {
           const otherTrack = tracks.find(t => t !== track);
           if (otherTrack) {
@@ -199,38 +193,28 @@ export const PhaserGame = () => {
         }
       });
 
+      const currentTime = this.time.now;
       cats.forEach((cat, index) => {
         if (!cat.getData('finished')) {
-          const baseSpeed = cat.getData('baseSpeed');
-          const phase = cat.getData('phase');
-          const time = this.time.now * 0.001; // 현재 시간을 초 단위로 변환
+          const startTime = cat.getData('raceStartTime');
+          const elapsedSeconds = (currentTime - startTime) / 1000;
           
-          let speedVariation;
-          const progress = cat.x / gameWidth; // 진행률 (0~1)
-          
-          if (index === 0) { // 1등 고양이는 특별한 패턴
-            // 초반에는 느리게, 후반에 급격히 가속
-            const speedCurve = Math.pow(progress, 0.3); // 진행률에 따른 속도 커브
-            const lateSpurt = Math.max(0, (progress - 0.7) * 3); // 후반 스퍼트
+          if (elapsedSeconds <= 10) {
+            const second = Math.floor(elapsedSeconds);
+            const fraction = elapsedSeconds - second;
             
-            // 기본적인 사인 변동 + 후반 가속
-            speedVariation = (Math.sin(time * 3 + phase) * 0.5 - 0.3) * (1 - lateSpurt) +
-                            lateSpurt * 0.8; // 마지막 스퍼트는 80% 빠르게
-          } else {
-            // 다른 고양이들은 더 큰 변동폭을 가짐
-            const variationScale = 0.6; // 60%까지 변동
-            speedVariation = Math.sin(time * 2 + phase) * variationScale;
-            
-            // 진행률에 따라 변동폭 조절 (후반에는 변동 감소)
-            speedVariation *= (1 - Math.pow(progress, 2));
-          }
-          
-          const currentSpeed = baseSpeed * (1 + speedVariation);
-          cat.x += currentSpeed;
-
-          if (cat.x >= gameWidth) {
-            cat.x = gameWidth - (cat.width * cat.scale);
-            cat.setData('finished', true);
+            if (second < 10) {
+              let totalDistance = 0;
+              for (let i = 0; i < second; i++) {
+                totalDistance += normalizedDistances[index][i];
+              }
+              totalDistance += normalizedDistances[index][second] * fraction;
+              
+              cat.x = totalDistance * gameWidth;
+            }
+          } else if (elapsedSeconds <= 11) {
+            const exitProgress = elapsedSeconds - 10;
+            cat.x += (gameWidth * 0.5) * exitProgress;
           }
         }
       });
