@@ -39,6 +39,11 @@ export const PhaserGame = ({
         height: '100%',
         autoCenter: Phaser.Scale.CENTER_BOTH
       },
+      input: {
+        mouse: {
+          preventDefaultWheel: false,
+        },
+      },
       physics: {
         default: 'arcade',
         arcade: {

@@ -32,7 +32,6 @@ const getPage = (page: Page, { postId, racing, startTime, votes, options, catInd
       return <PokemonPage />;
     case 'waiting':
       return <WaitingPage 
-        // startTime={new Date(Date.now() + 60 * 1000 * 60 * 5)} 
         startTime={startTimeDate}
         options={options}
         votes={votes}

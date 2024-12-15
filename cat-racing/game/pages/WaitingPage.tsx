@@ -25,6 +25,11 @@ export function WaitingPage({ startTime, votes, options, catIndexes }: WaitingPa
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
+      input: {
+        mouse: {
+          preventDefaultWheel: false,
+        },
+      },
       scene: {
         preload,
         create,
