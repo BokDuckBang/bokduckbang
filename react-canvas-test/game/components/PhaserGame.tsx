@@ -299,9 +299,12 @@ export const PhaserGame = () => {
                         
                         cat.x = totalDistance * gameWidth;
                     }
-                } else if (elapsedSeconds <= 11) {
-                    const exitProgress = elapsedSeconds - 10;
-                    cat.x += (gameWidth * 0.5) * exitProgress;
+                } else if (elapsedSeconds <= 12) {
+                    // 1초 대기 후 이동 시작
+                    if (elapsedSeconds > 11) {
+                        const exitProgress = (elapsedSeconds - 11) * 0.3; // 속도를 0.3배로 감소
+                        cat.x += (gameWidth * 0.5) * exitProgress;
+                    }
                 }
         
                 // 텍스트는 고양이의 x 좌표를 따라가되, 항상 고양이의 왼쪽에 위치
