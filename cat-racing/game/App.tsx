@@ -10,12 +10,13 @@ import { WaitingPage } from './pages/WaitingPage';
 const getPage = (page: Page, { postId, racing, startTime, votes, options, catIndexes, currentWinner }: { 
   postId: string,
   racing: number[][],
-  startTime: Date,
+  startTime: number,
   votes: number[],
   options: string[],
   catIndexes: number[],
   currentWinner: string | null,
 }) => {
+  const startTimeDate = new Date(startTime);
   switch (page) {
     case 'home':
       return <HomePage 
@@ -31,7 +32,8 @@ const getPage = (page: Page, { postId, racing, startTime, votes, options, catInd
       return <PokemonPage />;
     case 'waiting':
       return <WaitingPage 
-        startTime={new Date(Date.now() + 60 * 1000 * 60 * 5)} 
+        // startTime={new Date(Date.now() + 60 * 1000 * 60 * 5)} 
+        startTime={startTimeDate}
         options={options}
         votes={votes}
         catIndexes={catIndexes}
@@ -62,7 +64,7 @@ export const App = () => {
   return <div className="h-full">{getPage(initData?.page, { 
     postId, 
     racing: initData.racing, 
-    startTime: new Date(initData.startTime),
+    startTime: initData.startTime,
     votes: initData.votes,
     options: initData.options,
     catIndexes: initData.catIndexes,
