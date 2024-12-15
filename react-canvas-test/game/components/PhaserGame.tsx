@@ -18,18 +18,18 @@ const normalizedDistances = [
 const NUMBER_OF_CATS = 10; // 1~10 사이의 값으로 설정 가능
 
 const CAT_TEXTS = [
-  "김치찌개",
-  "제육볶음",
-  "햄버거",
-  "치킨",
-  "피자",
-  "라면",
-  "떡볶이",
-  "초밥",
-  "파스타",
-  "카레"
-];
-
+    "Margherita",
+    "Pepperoni",
+    "Hawaiian",
+    "Meat",
+    "Supreme",
+    "Four cheese",
+    "BBQ chicken",
+    "Potato",
+    "Seafood",
+    "Bulgogi"
+  ];
+  
 export const PhaserGame = () => {
   useEffect(() => {
     const config = {
@@ -408,7 +408,7 @@ export const PhaserGame = () => {
             const rankText = scene.add.text(
                 gameWidth/2 - popupWidth/3,
                 yPos,
-                `${index + 1}등`,
+                `${index + 1}`,
                 {
                     fontSize: '18px',
                     color: '#000000'
