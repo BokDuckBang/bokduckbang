@@ -297,19 +297,20 @@ export const PhaserGame = () => {
                         }
                         totalDistance += normalizedDistances[index][second] * fraction;
                         
-                        cat.x = totalDistance * gameWidth;
+                        cat.x = Math.min(totalDistance * gameWidth, gameWidth * 0.98);
                     }
                 } else if (elapsedSeconds <= 12) {
                     // 1초 대기 후 이동 시작
                     if (elapsedSeconds > 11) {
-                        const exitProgress = (elapsedSeconds - 11) * 0.3; // 속도를 0.3배로 감소
-                        cat.x += (gameWidth * 0.5) * exitProgress;
+                        const exitProgress = (elapsedSeconds - 11) * 0.3;
+                        const newX = cat.x + (gameWidth * 0.5) * exitProgress;
+                        cat.x = Math.min(newX, gameWidth * 1.2);
                     }
                 }
         
                 // 텍스트는 고양이의 x 좌표를 따라가되, 항상 고양이의 왼쪽에 위치
                 if (catTexts[index]) {
-                    catTexts[index].x = cat.x - 100; // 고양이보다 100픽셀 왼쪽에 위치
+                    catTexts[index].x = cat.x - 100;
                 }
             }
         });
