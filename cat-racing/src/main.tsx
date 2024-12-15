@@ -143,6 +143,15 @@ Devvit.addCustomPostType({
       return { votes };
     })
 
+    // console.log(
+    //   'Racing data',
+    //   startTime,
+    //   racing,
+    //   options,
+    //   catIndexes,
+    //   votes,
+    // )
+
     const racingWinnerIndex = Object.entries(racing.map((r) => r.reduce((acc, c) => acc + c, 0))).toSorted((a, b) => b[1] - a[1])[0][0];
   
     const [{ winUsername }] = useState<{ winUsername: string | null }>(async () => {
@@ -224,6 +233,7 @@ Devvit.addCustomPostType({
     })
 
 
+    // 정해진 시간 이전에는 대기화면, 이후에는 홈화면
     const page = startTime > Date.now() ? 'waiting' : 'home';
     // const page = 'waiting';
     
@@ -265,6 +275,10 @@ Devvit.addCustomPostType({
                 break;
 
               case 'REQUEST_CREATE_BET':                 
+                if (Date.now() > startTime) {
+                  context.ui.showToast({ text: 'Voting is closed' });
+                  return;
+                }
                 context.ui.showForm(betForm);
                 break;
               

@@ -18,7 +18,15 @@ const getPage = (page: Page, { postId, racing, startTime, votes, options, catInd
 }) => {
   switch (page) {
     case 'home':
-      return <HomePage postId={postId} racing={racing} />;
+      return <HomePage 
+        postId={postId}
+        racing={racing} 
+        options={options}
+        votes={votes}
+        // startTime={startTime}
+        catIndexes={catIndexes}
+        currentWinner={currentWinner}
+      />;
     case 'pokemon':
       return <PokemonPage />;
     case 'waiting':

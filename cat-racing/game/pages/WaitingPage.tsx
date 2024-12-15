@@ -44,7 +44,7 @@ export function WaitingPage({ startTime, votes, options, catIndexes }: WaitingPa
 
   function preload(this: Phaser.Scene) {
     for (let i = 0; i < 10; i++) {
-      this.load.spritesheet(`cat${i}`, `/cat${i + 1}-sprite.png`, {
+      this.load.spritesheet(`cat${i + 1}`, `/cat${i + 1}-sprite.png`, {
         frameWidth: 32,
         frameHeight: 32,
       });
@@ -111,9 +111,11 @@ export function WaitingPage({ startTime, votes, options, catIndexes }: WaitingPa
   
     // Define the animation for cats
     for (let i = 0; i < Math.min(options.length, 10); i++) {
+      const animKey = `catAnimation${i + 1}`;
       const catName = `cat${catIndexes[i] + 1}`
+    
       this.anims.create({
-        key: `catAnimation${i + 1}`,
+        key: animKey,
         frames: this.anims.generateFrameNumbers(catName, { start: 0, end: 3 }),
         frameRate: 8,
         repeat: -1, // 반복 애니메이션
@@ -128,7 +130,7 @@ export function WaitingPage({ startTime, votes, options, catIndexes }: WaitingPa
       const catSprite = this.add.sprite(xPosition - textOffsetX, yPosition, catName)
         .setDisplaySize(spriteSize, spriteSize)
         .setOrigin(0, 0.5)
-        .play(`catAnimation${i + 1}`); // 애니메이션 재생
+        .play(animKey); // 애니메이션 재생
   
       const titleText = this.add.text(xPosition, yPosition - 10, `${options[i]}`, {
         font: `${spriteSize / 2}px Arial`,

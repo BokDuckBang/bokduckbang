@@ -1,22 +1,34 @@
 import { useEffect } from 'react';
 import Phaser from 'phaser';
 
-const NUMBER_OF_CATS = 10; // 1~10 사이의 값으로 설정 가능
+// const NUMBER_OF_CATS = 10; // 1~10 사이의 값으로 설정 가능
 
-const CAT_TEXTS = [
-  "Classic Margherita",
-  "Pepperoni overload",
-  "Hawaiian",
-  "Meat lovers",
-  "Veggie supreme",
-  "Four cheese",
-  "BBQ chicken",
-  "Potato",
-  "Seafood",
-  "Korean Bulgogi"
-];
+// const CAT_TEXTS = [
+//   "Classic Margherita",
+//   "Pepperoni overload",
+//   "Hawaiian",
+//   "Meat lovers",
+//   "Veggie supreme",
+//   "Four cheese",
+//   "BBQ chicken",
+//   "Potato",
+//   "Seafood",
+//   "Korean Bulgogi"
+// ];
 
-export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: number[][] }) => {
+export const PhaserGame = ({ 
+  racing,
+  options,
+  catIndexes,
+  votes,
+  currentWinner,
+}: { 
+  racing: number[][],
+  options: string[],
+  catIndexes: number[],
+  votes: number[],
+  currentWinner: string | null,
+}) => {
   useEffect(() => {
     const config = {
       type: Phaser.AUTO,
@@ -109,10 +121,11 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
       startImage.setDisplaySize(startImage.width, trackHeight);
 
       // 10개의 고양이 애니메이션 생성
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 0; i < Math.min(options.length, 10); i++) {
+        const spriteKey = `cat${catIndexes[i] + 1}`;
         this.anims.create({
-          key: `walk${i}`,
-          frames: this.anims.generateFrameNumbers(`cat${i}`, { 
+          key: `walk${i + 1}`,
+          frames: this.anims.generateFrameNumbers(spriteKey, { 
             start: 0,
             end: 3
           }),
@@ -126,14 +139,14 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
       const startY = backgroundHeight + trackBgHeight;
 
       // 중앙 트랙 위치 계산 (5번째 트랙부터 시작)
-      const centerTrackIndex = 5 - Math.floor(NUMBER_OF_CATS / 2);
+      const centerTrackIndex = 5 - Math.floor(options.length / 2);
 
       // 게임 시작 시간을 3초 뒤로 설정
       const gameStartTime = this.time.now + 3000;
 
-      // NUMBER_OF_CATS 만큼의 고양이 생성
-      for (let i = 0; i < NUMBER_OF_CATS; i++) {
-        const spriteKey = `cat${i + 1}`;
+      // Options 수 만큼의 고양이 생성
+      for (let i = 0; i < options.length; i++) {
+        const spriteKey = `cat${catIndexes[i] + 1}`;
         const animKey = `walk${i + 1}`;
         
         // 각 고양이의 y 위치 계산 (중앙 트랙부터 순서대로)
@@ -150,7 +163,7 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
         cats.push(cat);
 
         // 텍스트는 기존 위치 그대로 유지
-        const text = this.add.text(20, startY + (trackIndex * catHeight) + (catHeight/4), CAT_TEXTS[i], {
+        const text = this.add.text(20, startY + (trackIndex * catHeight) + (catHeight/4), options[i], {
             fontSize: `${catHeight * 0.5}px`,
             color: '#ffffff',
             align: 'left'
@@ -195,7 +208,7 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
         const newTrackArea = gameHeight * 0.6;
         const newCatHeight = newTrackArea / 10;
         const newStartY = newBackgroundHeight + newTrackBgHeight;
-        const newCenterTrackIndex = 5 - Math.floor(NUMBER_OF_CATS / 2);
+        const newCenterTrackIndex = 5 - Math.floor(options.length / 2);
 
         cats.forEach((cat, index) => {
           const trackIndex = newCenterTrackIndex + index;
@@ -281,9 +294,9 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
                     if (second < 10) {
                         let totalDistance = 0;
                         for (let i = 0; i < second; i++) {
-                            totalDistance += normalizedDistances[index][i];
+                            totalDistance += racing[index][i];
                         }
-                        totalDistance += normalizedDistances[index][second] * fraction;
+                        totalDistance += racing[index][second] * fraction;
                         
                         cat.x = Math.min(totalDistance * gameWidth, gameWidth * 0.98);
                     }
@@ -328,18 +341,21 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
         );
         dimBg.setOrigin(0);
 
-        // 순위 결정 (x 좌표가 더 큰 고양이가 더 앞선 순위)
-        const sortedCats = [...cats].sort((a, b) => b.x - a.x);
+        // 순위 결정 (racing 합산이 큰 순위)
+        const rankingIndexes = Object.entries(racing.map(data => data.reduce((acc, cur) => acc + cur, 0))).sort((a, b) => b[1] - a[1]).map(([index]) => Number(index));
+        console.log('ranking', rankingIndexes)
+
+        // const sortedCats = [...cats].sort((a, b) => b.x - a.x);
 
         // 팝업 크기 계산 (동적)
         const popupWidth = gameWidth * 0.6;
         const itemHeight = 40; // 각 순위 항목의 높이
         
         // 고양이 수에 따라 titleHeight와 padding 조정
-        const titleHeight = sortedCats.length > 8 ? 50 : 80; // 8등 초과시 titleHeight 축소
-        const padding = sortedCats.length > 8 ? 20 : 40; // 8등 초과시 padding 축소
+        const titleHeight = rankingIndexes.length > 8 ? 50 : 80; // 8등 초과시 titleHeight 축소
+        const padding = rankingIndexes.length > 8 ? 20 : 40; // 8등 초과시 padding 축소
         
-        const totalContentHeight = (sortedCats.length * itemHeight) + titleHeight;
+        const totalContentHeight = (rankingIndexes.length * itemHeight) + titleHeight;
         const popupHeight = totalContentHeight + (padding * 2);
 
         // 흰색 팝업 배경
@@ -375,7 +391,7 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
         const nicknameText = scene.add.text(
             gameWidth/2,
             gameHeight/2 - popupHeight/2 + padding + titleHeight/2,
-            `(DuckSeb)`,
+            currentWinner ?? 'No user win.',
             {
                 fontSize: '18px',
                 color: '#000000',
@@ -386,8 +402,7 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
         rankingPopup.add(nicknameText);
 
         // 각 순위별 고양이와 텍스트 표시
-        sortedCats.forEach((cat, index) => {
-            const catIndex = cats.indexOf(cat);
+        rankingIndexes.forEach((catIndex, index) => {
             const yPos = gameHeight/2 - popupHeight/2 + titleHeight + (index * itemHeight) + padding;
 
             // 순위 텍스트
@@ -415,7 +430,7 @@ export const PhaserGame = ({ normalizedDistances }: { normalizedDistances: numbe
             const nameText = scene.add.text(
                 gameWidth/2 + popupWidth/6,
                 yPos,
-                CAT_TEXTS[catIndex],
+                options[catIndex],
                 {
                     fontSize: '18px',
                     color: '#000000'
