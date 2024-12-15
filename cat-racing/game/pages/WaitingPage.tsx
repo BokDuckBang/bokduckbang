@@ -1,11 +1,16 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
+import { sendToDevvit } from '../utils';
 
 type WaitingPageProps = {
   startTime: Date;
+  catIndexes: number[];
+  votes: number[];
+  options: string[];
 };
 
-export function WaitingPage({ startTime }: WaitingPageProps) {
+export function WaitingPage({ startTime, votes, options, catIndexes }: WaitingPageProps) {
+  console.log(catIndexes)
   const phaserRef = useRef<HTMLDivElement | null>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
 
@@ -39,7 +44,7 @@ export function WaitingPage({ startTime }: WaitingPageProps) {
 
   function preload(this: Phaser.Scene) {
     for (let i = 0; i < 10; i++) {
-      this.load.spritesheet(`cat${i + 1}`, `/cat${i + 1}-sprite.png`, {
+      this.load.spritesheet(`cat${i}`, `/cat${i + 1}-sprite.png`, {
         frameWidth: 32,
         frameHeight: 32,
       });
@@ -47,7 +52,6 @@ export function WaitingPage({ startTime }: WaitingPageProps) {
     this.load.image('background', '/bg.png');
     this.load.image('track-bg', '/track-bg.png');
     this.load.image('track', '/track.png');
-    // this.load.image('betButton', '/betnow.png');
   }
 
   function create(this: Phaser.Scene) {
@@ -103,12 +107,14 @@ export function WaitingPage({ startTime }: WaitingPageProps) {
   
     const cats: Phaser.GameObjects.Sprite[] = [];
     const titles: Phaser.GameObjects.Text[] = [];
+    const voteTexts: Phaser.GameObjects.Text[] = [];
   
     // Define the animation for cats
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < Math.min(options.length, 10); i++) {
+      const catName = `cat${catIndexes[i] + 1}`
       this.anims.create({
         key: `catAnimation${i + 1}`,
-        frames: this.anims.generateFrameNumbers(`cat${i + 1}`, { start: 0, end: 3 }),
+        frames: this.anims.generateFrameNumbers(catName, { start: 0, end: 3 }),
         frameRate: 8,
         repeat: -1, // 반복 애니메이션
       });
@@ -119,24 +125,31 @@ export function WaitingPage({ startTime }: WaitingPageProps) {
       const xPosition = width / 2 - columnGap / 2 + column * columnGap;
       const yPosition = startY + row * gapY;
   
-      const catSprite = this.add.sprite(xPosition - textOffsetX, yPosition, `cat${i + 1}`)
+      const catSprite = this.add.sprite(xPosition - textOffsetX, yPosition, catName)
         .setDisplaySize(spriteSize, spriteSize)
         .setOrigin(0, 0.5)
         .play(`catAnimation${i + 1}`); // 애니메이션 재생
   
-      const titleText = this.add.text(xPosition, yPosition, `Cat ${i + 1}`, {
+      const titleText = this.add.text(xPosition, yPosition - 10, `${options[i]}`, {
         font: `${spriteSize / 2}px Arial`,
+        color: '#ffffff',
+      }).setOrigin(0, 0.5);
+
+      const voteText = this.add.text(xPosition, yPosition + 10, `Vote: ${votes[i]}`, {
+        font: `${spriteSize / 4}px Arial`,
         color: '#ffffff',
       }).setOrigin(0, 0.5);
   
       cats.push(catSprite);
       titles.push(titleText);
+      voteTexts.push(voteText);
     }
 
     // Resize handler
     this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
       const { width, height } = gameSize;
   
+      overlay.setSize(width, height);
       countdownText.setPosition(width / 2, 70);
   
       const startY = paddingTop + spriteSize / 2;
@@ -149,7 +162,8 @@ export function WaitingPage({ startTime }: WaitingPageProps) {
         const yPosition = startY + row * gapY;
   
         cats[i].setPosition(xPosition - textOffsetX, yPosition);
-        titles[i].setPosition(xPosition, yPosition);
+        titles[i].setPosition(xPosition, yPosition - 10);
+        voteTexts[i].setPosition(xPosition, yPosition + 10);
       }
     });
 
@@ -189,6 +203,9 @@ export function WaitingPage({ startTime }: WaitingPageProps) {
       <div ref={phaserRef} style={{ width: '100%', height: '100%', position: 'relative' }} />
       <button
         id='bet-button'
+        onClick={() => {
+          sendToDevvit({ type: 'REQUEST_CREATE_BET' });
+        }}
       >Bet Now!</button>
     </div>
   );

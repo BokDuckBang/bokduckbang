@@ -1,4 +1,4 @@
-import { Devvit, useState } from '@devvit/public-api';
+import { Devvit, useState, useForm } from '@devvit/public-api';
 import { sendMessageToWebview } from './utils/utils.js';
 import { WebviewToBlockMessage } from '../game/shared.js';
 import { WEBVIEW_ID } from './constants.js';
@@ -8,6 +8,8 @@ Devvit.configure({
   redditAPI: true,
   redis: true,
 });
+
+const CAT_INDEXES = Array.from({ length: 10 }).map((_, i) => i);
 
 function getRacingData(size: number) {
   const data = Array.from({ length: size }).map((_, i) => {
@@ -24,15 +26,22 @@ function getRacingData(size: number) {
   return result;
 }
 
-const myForm = Devvit.createForm(
+function randomItems<T>(arr: T[], count: number) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+const createRaceForm = Devvit.createForm(
   {
     fields: [
       {
         type: 'string',
         name: 'title',
         label: 'Title',
+        placeholder: 'Cat Racing Game',
       },
       {
+        required: true,
         type: 'number',
         name: 'minutes',
         label: 'start after (minutes)',
@@ -41,16 +50,23 @@ const myForm = Devvit.createForm(
         type: 'string',
         name: 'options',
         label: 'Options (comma separated)',
+        required: true,
       },
     ],
   },
   async (event, context) => {
     const { reddit, redis, ui } = context;
+
+    const options = (event.values.options ?? '').split(',').map(o => o.trim());
+    if (options.length < 2) {
+      ui.showToast({ text: 'Please provide at least two options' });
+      return;
+    }
+
     const min = event.values.minutes ?? 10;
     const title = event.values.title ?? 'Cat Racing Game';
-    const until = new Date(Date.now() + min * 60 * 1000);
-    const options = event.values.options ?? '';
-    const size = options.split(',').length ?? 0;
+    const startTime = Date.now() + min * 60 * 1000;
+
     ui.showToast({ text: 'Creating a cat racing game...' });
 
     const subreddit = await reddit.getCurrentSubreddit();
@@ -60,16 +76,17 @@ const myForm = Devvit.createForm(
       // The preview appears while the post loads
       preview: (
         <vstack height="100%" width="100%" alignment="middle center">
-          <text size="large">Loading ...</text>
+          <text size="large">Loading...</text>
         </vstack>
       ),
     });
 
 
 
-    redis.set(`deadline:${post.id}`, String(until.getTime()));
-    redis.set(`options:${post.id}`, options);
-    redis.set(`racing:${post.id}`, JSON.stringify(getRacingData(size)));
+    redis.set(`deadline:${post.id}`, String(startTime));
+    redis.set(`options:${post.id}`, JSON.stringify(options));
+    redis.set(`racing:${post.id}`, JSON.stringify(getRacingData(options.length)));
+    redis.set(`catindexes:${post.id}`, JSON.stringify(randomItems(CAT_INDEXES, options.length) ));
     ui.navigateTo(post);
   }
 );
@@ -77,12 +94,12 @@ const myForm = Devvit.createForm(
 
 Devvit.addMenuItem({
   // Please update as you work on your idea!
-  label: 'Make cat racing game',
+  label: '[Cat Racing] Make cat racing game',
   location: 'subreddit',
   forUserType: 'moderator',
   onPress: async (_event, context) => {
     const { ui } = context;
-    ui.showForm(myForm);
+    ui.showForm(createRaceForm);
   },
 });
 
@@ -91,22 +108,125 @@ Devvit.addCustomPostType({
   name: 'Experience Post',
   height: 'tall',
   render: (context) => {
-    const [{ until }] = useState<{ until: number }>(async () => {
-      const stored = await context.redis.get(`deadline:${context.postId}`);
+    const { redis } = context;
+    const [{ startTime, racing, options, catIndexes }] = useState<{ 
+      startTime: number,
+      racing: number[][],
+      options: string[],
+      catIndexes: number[],
+   }>(async () => {
+      const [
+        startTime,
+        racing,
+        options,
+        catIndexes,
+      ] = await Promise.all([
+        redis.get(`deadline:${context.postId}`),
+        redis.get(`racing:${context.postId}`),
+        redis.get(`options:${context.postId}`),
+        redis.get(`catindexes:${context.postId}`),
+      ]);
       return {
-        until: Number(stored),
-      };
-    });
-    const [{ racing }] = useState<{ racing: number[][] }>(async () => {
-      const stored = await context.redis.get(`racing:${context.postId}`);
-      return {
-        racing: JSON.parse(stored ?? '[]'),
+        startTime: Number(startTime),
+        racing: JSON.parse(racing ?? '[]'),
+        options: JSON.parse(options ?? '[]'),
+        catIndexes: JSON.parse(catIndexes ?? '[]'),
       };
     });
 
-    const page = until > Date.now() ? 'waiting' : 'home';
+    const [{ votes }] = useState<{ votes: number[] }>(async () => {
+      const votes = await Promise.all(options.map(async (_, i) => {
+        const count = await redis.zCard(`vote:${context.postId}:${i}`) ?? 0;
+        return count;
+      }));
+
+      return { votes };
+    })
+
+    const racingWinnerIndex = Object.entries(racing.map((r) => r.reduce((acc, c) => acc + c, 0))).toSorted((a, b) => b[1] - a[1])[0][0];
+  
+    const [{ winUsername }] = useState<{ winUsername: string | null }>(async () => {
+      const winUserIds = await redis.zRange(`vote:${context.postId}:${racingWinnerIndex}`, 0, 1, { by: 'rank' }); 
+      const winUserId = winUserIds[0]?.member;
+
+      if (!winUserId) {
+        return { winUsername: null };
+      }
+
+      const user = await context.reddit.getUserById(winUserId);
+
+      return { winUsername: user?.username ?? null };
+    });
+
+    const vote = async (optionIndex: number) => {
+      const userId = context.userId;
+      if (!userId) {
+        return;
+      }
+
+      if (Date.now() > startTime) {
+        return { success: false, message: 'Voting is closed' };
+      }
+
+      const prevVoted = await redis.get(`uservoted:${context.postId}:${userId}`);
+      if (prevVoted) {
+        await redis.zRem(`vote:${context.postId}:${prevVoted}`, [userId]);
+      }
+
+      await redis.set(`uservoted:${context.postId}:${userId}`, String(optionIndex));
+      await redis.zAdd(`vote:${context.postId}:${optionIndex}`, { 
+        member: userId,
+        score: Math.random(),
+      });
+
+      return { success: true };
+    }
+
+    const betForm = useForm({
+      title: 'Which cat will you bet on?',
+      acceptLabel: 'Bet',
+      fields: [
+        {
+          type: 'select',
+          name: 'option',
+          label: 'Select a cat',
+          options: options.map((o, i) => ({ label: o, value: String(i) })),
+        },
+        {
+          type: 'boolean',
+          name: 'share',
+          label: 'Share your bet',
+          defaultValue: false,
+        },
+      ],
+    }, async (values) => {
+      if (!values.option) {
+        context.ui.showToast({ text: 'Please select a cat' });
+        return;
+      }
+
+      const option = Number(values.option);
+      const optionTitle = options[option];
+      const user = await context.reddit.getUserById(context.userId ?? '');
+      
+      const result = await vote(option);
+      if (!result?.success) {
+        context.ui.showToast({ text: result?.message ?? 'Failed to vote' });
+        return;
+      }
+      if (values.share) {
+        context.reddit.submitComment({
+          id: context.postId!,
+          text: `Cat Racing:\n@u/${user?.username} bet on ${optionTitle}!`,
+        });
+      }
+      context.ui.showToast({ text: `You bet on ${optionTitle}` });
+    })
+
+
+    const page = startTime > Date.now() ? 'waiting' : 'home';
     // const page = 'waiting';
-    // const page = 'home';
+    
 
     return (
       <vstack height="100%" width="100%" alignment="center middle">
@@ -127,7 +247,11 @@ Devvit.addCustomPostType({
                     page: page,
                     postId: context.postId!,
                     racing: racing,
-                    startTime: until,
+                    startTime: startTime,
+                    catIndexes: catIndexes,
+                    votes,
+                    options,
+                    currentWinner: winUsername,
                   },
                 });
                 break;
@@ -135,10 +259,15 @@ Devvit.addCustomPostType({
                 sendMessageToWebview(context, {
                   type: 'RESPONSE_WAITING_DATA',
                   payload: {
-                    deadline: until,
+                    deadline: startTime,
                   },
                 });
                 break;
+
+              case 'REQUEST_CREATE_BET':                 
+                context.ui.showForm(betForm);
+                break;
+              
               // case 'GET_POKEMON_REQUEST':
               //   context.ui.showToast({ text: `Received message: ${JSON.stringify(data)}` });
               //   const pokemon = await getPokemonByName(data.payload.name);
