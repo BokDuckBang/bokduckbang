@@ -4,15 +4,15 @@ import Phaser from 'phaser';
 // 각 고양이의 초당 이동 거리 (정규화된 값)
 const normalizedDistances = [
   [0.05, 0.08, 0.07, 0.09, 0.11, 0.10, 0.12, 0.13, 0.15, 0.10], // 1등
+  [0.08, 0.09, 0.08, 0.07, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07],
+  [0.08, 0.07, 0.08, 0.08, 0.07, 0.08, 0.08, 0.07, 0.07, 0.07],
   [0.12, 0.11, 0.10, 0.09, 0.08, 0.09, 0.10, 0.11, 0.08, 0.07],
+  [0.09, 0.08, 0.07, 0.08, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07],
+  [0.07, 0.08, 0.07, 0.07, 0.08, 0.07, 0.07, 0.07, 0.07, 0.07],
+  [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07],
   [0.08, 0.10, 0.12, 0.11, 0.09, 0.08, 0.09, 0.08, 0.08, 0.07],
   [0.10, 0.09, 0.08, 0.07, 0.11, 0.10, 0.08, 0.09, 0.07, 0.06],
   [0.07, 0.08, 0.09, 0.10, 0.08, 0.09, 0.08, 0.08, 0.08, 0.07],
-  [0.09, 0.08, 0.07, 0.08, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07],
-  [0.08, 0.09, 0.08, 0.07, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07],
-  [0.08, 0.07, 0.08, 0.08, 0.07, 0.08, 0.08, 0.07, 0.07, 0.07],
-  [0.07, 0.08, 0.07, 0.07, 0.08, 0.07, 0.07, 0.07, 0.07, 0.07],
-  [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07]
 ];
 
 const NUMBER_OF_CATS = 10; // 1~10 사이의 값으로 설정 가능
@@ -150,7 +150,7 @@ export const PhaserGame = () => {
         
         // 각 고양이의 y 위치 계산 (중앙 트랙부터 순서대로)
         const trackIndex = centerTrackIndex + i;
-        const catY = startY + (trackIndex * catHeight) + (catHeight/2);
+        const catY = startY + (trackIndex * catHeight) + (catHeight/2) - (catHeight * 0.2);
         
         const cat = this.add.sprite(0, catY, spriteKey);
         cat.setScale(1.3);
@@ -161,8 +161,8 @@ export const PhaserGame = () => {
         
         cats.push(cat);
 
-        // 텍스트 추가
-        const text = this.add.text(20, catY - (catHeight * 0.25), CAT_TEXTS[i], {
+        // 텍스트는 기존 위치 그대로 유지
+        const text = this.add.text(20, startY + (trackIndex * catHeight) + (catHeight/4), CAT_TEXTS[i], {
             fontSize: `${catHeight * 0.5}px`,
             color: '#ffffff',
             align: 'left'
@@ -211,12 +211,12 @@ export const PhaserGame = () => {
 
         cats.forEach((cat, index) => {
           const trackIndex = newCenterTrackIndex + index;
-          const newY = newStartY + (trackIndex * newCatHeight) + (newCatHeight/2);
+          const newY = newStartY + (trackIndex * newCatHeight) + (newCatHeight/2) - (newCatHeight * 0.2);
           cat.y = newY;
           
-          // 텍스트 위치와 크기도 업데이트
+          // 텍스트 위치는 기존대로 유지
           if (catTexts[index]) {
-            catTexts[index].setPosition(20, newY - (newCatHeight * 0.25));
+            catTexts[index].setPosition(20, newStartY + (trackIndex * newCatHeight) + (newCatHeight/4));
             catTexts[index].setFontSize(`${newCatHeight * 0.5}px`);
           }
         });
