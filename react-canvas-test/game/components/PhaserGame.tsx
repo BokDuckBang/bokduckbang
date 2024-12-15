@@ -64,6 +64,8 @@ export const PhaserGame = () => {
     let gameHeight: number;
     let startImage: Phaser.GameObjects.Image;
     let catTexts: Phaser.GameObjects.Text[] = [];
+    let rankingPopup: Phaser.GameObjects.Container;
+    let allCatsExited = false;
 
     function preload(this: Phaser.Scene) {
       // 10개의 고양이 스프라이트 로드
@@ -305,6 +307,11 @@ export const PhaserGame = () => {
                         const exitProgress = (elapsedSeconds - 11) * 0.3;
                         const newX = cat.x + (gameWidth * 0.5) * exitProgress;
                         cat.x = Math.min(newX, gameWidth * 1.2);
+                        
+                        // 고양이가 화면을 완전히 벗어났을 때 finished 상태로 변경
+                        if (cat.x >= gameWidth * 1.2) {
+                            cat.setData('finished', true);
+                        }
                     }
                 }
         
@@ -315,7 +322,126 @@ export const PhaserGame = () => {
             }
         });
         }
-      }
+
+        // 모든 고양이가 finished 상태인지 확인하고 순위표 표시
+        if (!allCatsExited && cats.every(cat => cat.getData('finished'))) {
+            allCatsExited = true;
+            showRankingPopup(this);
+        }
+    }
+
+    function showRankingPopup(scene: Phaser.Scene) {
+        // 반투명한 검정색 배경
+        const dimBg = scene.add.rectangle(
+            0, 
+            0, 
+            gameWidth, 
+            gameHeight, 
+            0x000000, 
+            0.7
+        );
+        dimBg.setOrigin(0);
+
+        // 순위 결정 (x 좌표가 더 큰 고양이가 더 앞선 순위)
+        const sortedCats = [...cats].sort((a, b) => b.x - a.x);
+
+        // 팝업 크기 계산 (동적)
+        const popupWidth = gameWidth * 0.6;
+        const itemHeight = 40; // 각 순위 항목의 높이
+        
+        // 고양이 수에 따라 titleHeight와 padding 조정
+        const titleHeight = sortedCats.length > 8 ? 50 : 80; // 8등 초과시 titleHeight 축소
+        const padding = sortedCats.length > 8 ? 20 : 40; // 8등 초과시 padding 축소
+        
+        const totalContentHeight = (sortedCats.length * itemHeight) + titleHeight;
+        const popupHeight = totalContentHeight + (padding * 2);
+
+        // 흰색 팝업 배경
+        const popup = scene.add.rectangle(
+            gameWidth/2,
+            gameHeight/2,
+            popupWidth,
+            popupHeight,
+            0xeaeaea,
+            0.8
+        );
+
+        // 컨테이너 생성
+        rankingPopup = scene.add.container(0, 0);
+        rankingPopup.add(dimBg);
+        rankingPopup.add(popup);
+
+        // 제목 텍스트
+        const titleText = scene.add.text(
+            gameWidth/2,
+            gameHeight/2 - popupHeight/2 + padding,
+            '🏆 Final Ranking 🏆',
+            {
+                fontSize: '24px',
+                color: '#000000',
+                fontWeight: 'bold'
+            }
+        );
+        titleText.setOrigin(0.5);
+        rankingPopup.add(titleText);
+
+        // 1등 닉네임 (제목과 순위 목록 사이)
+        const nicknameText = scene.add.text(
+            gameWidth/2,
+            gameHeight/2 - popupHeight/2 + padding + titleHeight/2,
+            `(DuckSeb)`,
+            {
+                fontSize: '18px',
+                color: '#000000',
+                fontStyle: 'italic'
+            }
+        );
+        nicknameText.setOrigin(0.5);
+        rankingPopup.add(nicknameText);
+
+        // 각 순위별 고양이와 텍스트 표시
+        sortedCats.forEach((cat, index) => {
+            const catIndex = cats.indexOf(cat);
+            const yPos = gameHeight/2 - popupHeight/2 + titleHeight + (index * itemHeight) + padding;
+
+            // 순위 텍스트
+            const rankText = scene.add.text(
+                gameWidth/2 - popupWidth/3,
+                yPos,
+                `${index + 1}등`,
+                {
+                    fontSize: '18px',
+                    color: '#000000'
+                }
+            );
+            rankText.setOrigin(0.5);
+
+            // 고양이 스프라이트
+            const rankCat = scene.add.sprite(
+                gameWidth/2 - popupWidth/6,
+                yPos,
+                `cat${catIndex + 1}`
+            );
+            rankCat.setScale(1.2);
+            rankCat.play(`walk${catIndex + 1}`);
+
+            // 고양이 이름 텍스트
+            const nameText = scene.add.text(
+                gameWidth/2 + popupWidth/6,
+                yPos,
+                CAT_TEXTS[catIndex],
+                {
+                    fontSize: '18px',
+                    color: '#000000'
+                }
+            );
+            nameText.setOrigin(0, 0.5);
+
+            rankingPopup.add(rankText);
+            rankingPopup.add(rankCat);
+            rankingPopup.add(nameText);
+        });
+    }
 
     return () => {
       game.destroy(true);
