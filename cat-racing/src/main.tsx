@@ -104,9 +104,9 @@ Devvit.addCustomPostType({
       };
     });
 
-    // const page = until > Date.now() ? 'waiting' : 'home';
+    const page = until > Date.now() ? 'waiting' : 'home';
     // const page = 'waiting';
-    const page = 'home';
+    // const page = 'home';
 
     return (
       <vstack height="100%" width="100%" alignment="center middle">
@@ -127,6 +127,7 @@ Devvit.addCustomPostType({
                     page: page,
                     postId: context.postId!,
                     racing: racing,
+                    startTime: until,
                   },
                 });
                 break;

@@ -15,6 +15,7 @@ export type BlocksToWebviewMessage =
       postId: string;
       page: Page;
       racing: number[][];
+      startTime: number;
     };
   }
   | {

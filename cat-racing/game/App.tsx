@@ -7,14 +7,14 @@ import { sendToDevvit } from './utils';
 import { useDevvitListener } from './hooks/useDevvitListener';
 import { WaitingPage } from './pages/WaitingPage';
 
-const getPage = (page: Page, { postId, racing }: { postId: string, racing: number[][] }) => {
+const getPage = (page: Page, { postId, racing, startTime }: { postId: string, racing: number[][], startTime: Date }) => {
   switch (page) {
     case 'home':
       return <HomePage postId={postId} racing={racing} />;
     case 'pokemon':
       return <PokemonPage />;
     case 'waiting':
-      return <WaitingPage />;
+      return <WaitingPage startTime={new Date(Date.now() + 60 * 1000 * 60 * 5)} />;
     default:
       throw new Error(`Unknown page: ${page satisfies never}`);
   }
@@ -38,5 +38,5 @@ export const App = () => {
     return <div>Loading...</div>;
   }
 
-  return <div className="h-full">{getPage(initData?.page, { postId, racing: initData.racing })}</div>;
+  return <div className="h-full">{getPage(initData?.page, { postId, racing: initData.racing, startTime: new Date(initData.startTime) })}</div>;
 };
