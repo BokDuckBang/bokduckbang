@@ -94,7 +94,7 @@ const createRaceForm = Devvit.createForm(
 
 Devvit.addMenuItem({
   // Please update as you work on your idea!
-  label: '[Cat Racing] Make cat racing game',
+  label: '[Cat Racing] Make cat racing game - ami test',
   location: 'subreddit',
   forUserType: 'moderator',
   onPress: async (_event, context) => {

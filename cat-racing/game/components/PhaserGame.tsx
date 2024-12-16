@@ -171,7 +171,8 @@ export const PhaserGame = ({
         const text = this.add.text(20, startY + (trackIndex * catHeight) + (catHeight/4), options[i], {
             fontSize: `${catHeight * 0.5}px`,
             color: '#ffffff',
-            align: 'left'
+            align: 'left', 
+            wordWrap: false
         });
         text.setOrigin(0, 0);
         catTexts.push(text);
@@ -222,8 +223,10 @@ export const PhaserGame = ({
           
           // 텍스트 위치는 기존대로 유지
           if (catTexts[index]) {
-            catTexts[index].setPosition(20, newStartY + (trackIndex * newCatHeight) + (newCatHeight/4));
-            catTexts[index].setFontSize(`${newCatHeight * 0.5}px`);
+            const fixedGapToCat = 50; // 텍스트 끝과 고양이 사이의 고정 여백
+            const textWidth = catTexts[index].width; // 텍스트의 실제 너비
+            const desiredTextX = cat.x - (textWidth + fixedGapToCat); // 고양이 위치에서 (텍스트 너비 + 여백)만큼 뺀 위치
+            catTexts[index].x = desiredTextX;
           }
         });
       });
@@ -321,7 +324,10 @@ export const PhaserGame = ({
         
                 // 텍스트는 고양이의 x 좌표를 따라가되, 항상 고양이의 왼쪽에 위치
                 if (catTexts[index]) {
-                    catTexts[index].x = cat.x - 100;
+                    const fixedGapToCat = 50; // 텍스트 끝과 고양이 사이의 고정 여백
+                    const textWidth = catTexts[index].width; // 텍스트의 실제 너비
+                    const desiredTextX = cat.x - (textWidth + fixedGapToCat); // 고양이 위치에서 (텍스트 너비 + 여백)만큼 뺀 위치
+                    catTexts[index].x = desiredTextX;
                 }
             }
         });
