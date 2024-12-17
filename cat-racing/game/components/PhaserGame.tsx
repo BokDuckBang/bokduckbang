@@ -69,6 +69,7 @@ export const PhaserGame = ({
     let catTexts: Phaser.GameObjects.Text[] = [];
     let rankingPopup: Phaser.GameObjects.Container;
     let allCatsExited = false;
+    let countdownText: Phaser.GameObjects.Text;
 
     function preload(this: Phaser.Scene) {
       // 10개의 고양이 스프라이트 로드
@@ -182,6 +183,23 @@ export const PhaserGame = ({
       // start 이미지에도 시작 시간 설정
       startImage.setData('startTime', gameStartTime);
 
+      // 카운트다운 텍스트 생성
+      countdownText = this.add.text(
+        gameWidth / 2,
+        gameHeight / 2,
+        '3',
+        {
+          fontSize: '120px',
+          color: '#ffffff',
+          fontWeight: 'bold',
+          stroke: '#000000',
+          strokeThickness: 8,
+          shadow: { blur: 10, color: '#000000', fill: true }
+        }
+      );
+      countdownText.setOrigin(0.5);
+      countdownText.setDepth(1000); // 다른 요소들 위에 표시되도록
+
       this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
         gameWidth = gameSize.width;
         gameHeight = gameSize.height;
@@ -230,12 +248,38 @@ export const PhaserGame = ({
             catTexts[index].x = desiredTextX;
           }
         });
+
+        // 카운트다운 텍스트 위치 조정
+        if (countdownText) {
+          countdownText.setPosition(gameWidth / 2, gameHeight / 2);
+        }
       });
     }
 
     function update(this: Phaser.Scene) {
         const currentTime = this.time.now;
-        const gameStarted = currentTime >= cats[0].getData('raceStartTime');
+        const gameStartTime = cats[0].getData('raceStartTime');
+        const timeUntilStart = gameStartTime - currentTime;
+        
+        // 카운트다운 업데이트
+        if (timeUntilStart > -500) {  // -500ms까지 텍스트를 보여줌
+            const secondsLeft = Math.ceil(timeUntilStart / 1000);
+            countdownText.setVisible(true);
+            
+            if (secondsLeft <= 0) {
+                countdownText.setText('Start!');
+                countdownText.setFontSize('80px');
+            } else if (secondsLeft <= 3) {
+                countdownText.setText(secondsLeft.toString());
+                countdownText.setFontSize('120px');
+            } else {
+                countdownText.setVisible(false);
+            }
+        } else {
+            countdownText.setVisible(false);
+        }
+
+        const gameStarted = currentTime >= gameStartTime;
       
         // 1등 고양이의 진행 상태 확인
         const firstCat = cats[0];
