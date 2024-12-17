@@ -1,5 +1,7 @@
 # Cat racing
 
+## Demo
+You can test Cat Racing app on subreddit [r/bokduckbang](https://www.reddit.com/r/bokduckbang).
 https://github.com/user-attachments/assets/3a5e7e8c-26d6-4eb6-a4d1-50fe76d216e0
 
 ## Inspiration
