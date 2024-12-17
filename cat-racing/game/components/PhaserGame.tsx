@@ -367,7 +367,7 @@ export const PhaserGame = ({
         // const sortedCats = [...cats].sort((a, b) => b.x - a.x);
 
         // 팝업 크기 계산 (동적)
-        const popupWidth = gameWidth * 0.6;
+        const popupWidth = gameWidth * 0.8;
         const itemHeight = 40; // 각 순위 항목의 높이
         
         // 고양이 수에 따라 titleHeight와 padding 조정
@@ -406,7 +406,7 @@ export const PhaserGame = ({
         titleText.setOrigin(0.5);
         rankingPopup.add(titleText);
 
-        // 1등 닉네임 (제목과 순위 목록 사이)
+        // 1등 닉네임 (제목과 순위 목록 이)
         const nicknameText = scene.add.text(
             gameWidth/2,
             gameHeight/2 - popupHeight/2 + padding + titleHeight/2,
@@ -438,7 +438,7 @@ export const PhaserGame = ({
 
             // 고양이 스프라이트
             const rankCat = scene.add.sprite(
-                gameWidth/2 - popupWidth/6,
+                gameWidth/2 - popupWidth/4,
                 yPos,
                 `cat${catIndex + 1}`
             );
@@ -447,12 +447,13 @@ export const PhaserGame = ({
 
             // 고양이 이름 텍스트
             const nameText = scene.add.text(
-                gameWidth/2 + popupWidth/6,
+                gameWidth/2 - popupWidth/8,
                 yPos,
                 options[catIndex],
                 {
                     fontSize: '18px',
-                    color: '#000000'
+                    color: '#000000',
+                    wordWrap: { width: popupWidth * 0.4 }
                 }
             );
             nameText.setOrigin(0, 0.5);
