@@ -1,5 +1,7 @@
 # Cat racing
 
+https://github.com/user-attachments/assets/3a5e7e8c-26d6-4eb6-a4d1-50fe76d216e0
+
 ## Inspiration
 
 When starting this project, we focused on designing a game that could be actively played within a subreddit community. To achieve this, we centered our ideas around three key questions:
