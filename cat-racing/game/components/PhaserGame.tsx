@@ -467,10 +467,11 @@ export const PhaserGame = ({
         // 각 순위별 고양이와 텍스트 표시
         rankingIndexes.forEach((catIndex, index) => {
             const yPos = gameHeight/2 - popupHeight/2 + titleHeight + (index * itemHeight) + padding;
+            const centerX = gameWidth/2;  // 팝업의 중앙 X 좌표
 
-            // 순위 텍스트
+            // 순위 텍스트 (왼쪽)
             const rankText = scene.add.text(
-                gameWidth/2 - popupWidth/3,
+                centerX - 120,  // 중앙에서 왼쪽으로 120px
                 yPos,
                 `${index + 1}`,
                 {
@@ -480,18 +481,18 @@ export const PhaserGame = ({
             );
             rankText.setOrigin(0.5);
 
-            // 고양이 스프라이트
+            // 고양이 스프라이트 (중앙 왼쪽)
             const rankCat = scene.add.sprite(
-                gameWidth/2 - popupWidth/4,
+                centerX - 60,   // 중앙에서 왼쪽으로 60px
                 yPos,
                 `cat${catIndex + 1}`
             );
             rankCat.setScale(1.2);
             rankCat.play(`walk${catIndex + 1}`);
 
-            // 고양이 이름 텍스트
+            // 고양이 이름 텍스트 (중앙 오른쪽)
             const nameText = scene.add.text(
-                gameWidth/2 - popupWidth/8,
+                centerX + 20,   // 중앙에서 오른쪽으로 20px
                 yPos,
                 options[catIndex],
                 {
