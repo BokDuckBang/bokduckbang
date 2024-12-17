@@ -172,9 +172,10 @@ export const PhaserGame = ({
             fontSize: `${catHeight * 0.5}px`,
             color: '#ffffff',
             align: 'left', 
-            wordWrap: false
+            wordWrap: { width: gameWidth * 0.3 }
         });
         text.setOrigin(0, 0);
+        text.setVisible(false); // 초기에는 숨김 상태로 설정
         catTexts.push(text);
       }
 
@@ -253,6 +254,13 @@ export const PhaserGame = ({
       
         // 게임 시작 후에만 모든 배경 요소들이 움직임
         if (gameStarted) {
+          // 게임이 시작되면 모든 텍스트를 보이게 함
+          catTexts.forEach(text => {
+            if (!text.visible) {
+              text.setVisible(true);
+            }
+          });
+          
           // 배경 이미지 업데이트
           backgrounds.forEach(bg => {
             bg.x -= 1 * speedFactor;
